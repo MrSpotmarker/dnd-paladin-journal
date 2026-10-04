@@ -1,0 +1,45 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+*.dex
+
+# Files for the ART/Dalvik VM
+*.class
+
+# Java / Gradle build outputs
+*.log
+.gradle/
+build/
+app/build/
+**/build/
+**/bin/
+
+# Local configuration file (sdk.dir, etc.)
+local.properties
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android Studio Profiler / Captures
+captures/
+.externalNativeBuild
+.cxx/
+
+# Keystores and signing keys
+*.jks
+*.keystore
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
