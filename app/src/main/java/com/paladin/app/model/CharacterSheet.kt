@@ -22,7 +22,18 @@ enum class Skill(val displayName: String, val ability: Ability) {
     DECEPTION("Täuschen", Ability.CHARISMA),
     INTIMIDATION("Einschüchtern", Ability.CHARISMA),
     PERFORMANCE("Auftreten", Ability.CHARISMA),
-    PERSUASION("Überzeugen", Ability.CHARISMA)
+    PERSUASION("Überzeugen", Ability.CHARISMA);
+
+    companion object {
+        val paladinClassSkills = setOf(
+            ATHLETICS,
+            INSIGHT,
+            INTIMIDATION,
+            MEDICINE,
+            PERSUASION,
+            RELIGION
+        )
+    }
 }
 
 @Serializable
@@ -36,6 +47,7 @@ data class CharacterSheet(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "Sir Galahad",
     val level: Int = 1,
+    val hasCompletedCreation: Boolean = true,
     val oath: String? = null, // z. B. "Oath of Devotion", "Oath of Vengeance"
     val baseAbilityScores: AbilityScores = AbilityScores(),
     val currentHp: Int = 12,
@@ -46,7 +58,10 @@ data class CharacterSheet(
     val channelDivinityUsed: Int = 0,
     val proficientSkills: Set<Skill> = setOf(Skill.ATHLETICS, Skill.RELIGION),
     val masteredWeaponNames: List<String> = listOf("Longsword", "Halberd"),
+    val fightingStyle: String? = null, // z. B. "Defense", "Dueling"
+    val feats: List<String> = emptyList(), // z. B. ["Alert", "Savage Attacker"]
     val preparedSpellIds: Set<String> = emptySet(),
+    val activeBuffIds: Set<String> = emptySet(), // z. B. ["srd_shield_of_faith", "srd_bless", "sacred_weapon"]
     val spellSlotUsages: Map<Int, Int> = emptyMap(), // Level -> Used slots
     val inventory: List<Item> = emptyList(),
     val customSpells: List<Spell> = emptyList(),

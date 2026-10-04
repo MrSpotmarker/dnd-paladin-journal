@@ -39,7 +39,8 @@ class RestServiceTest {
             level = 3,
             currentHp = 10,
             hitDiceUsed = 0,
-            channelDivinityUsed = 2 // used both uses
+            channelDivinityUsed = 2, // used both uses
+            activeBuffIds = setOf("srd_shield_of_faith", "sacred_weapon")
         )
 
         // Short Rest spends 1 hit die, rolls 8 HP
@@ -54,6 +55,7 @@ class RestServiceTest {
         assertEquals(1, rested.hitDiceUsed)
         // In 2024 rules: Regains 1 expended Channel Divinity use! So channelDivinityUsed drops to 1
         assertEquals(1, rested.channelDivinityUsed)
+        assertTrue("Active buffs should expire after short rest", rested.activeBuffIds.isEmpty())
     }
 
     @Test
@@ -65,7 +67,8 @@ class RestServiceTest {
             hitDiceUsed = 3,
             layOnHandsUsed = 15,
             channelDivinityUsed = 2,
-            spellSlotUsages = mapOf(1 to 3)
+            spellSlotUsages = mapOf(1 to 3),
+            activeBuffIds = setOf("srd_bless")
         )
 
         val rested = RestService.performLongRest(character, maxHp = 32)
@@ -75,6 +78,7 @@ class RestServiceTest {
         assertEquals(0, rested.layOnHandsUsed)
         assertEquals(0, rested.channelDivinityUsed)
         assertTrue(rested.spellSlotUsages.isEmpty())
+        assertTrue("Active buffs should expire after long rest", rested.activeBuffIds.isEmpty())
         // Hit dice recovery: half of level (4 / 2 = 2 recovered). hitDiceUsed was 3 -> now 1
         assertEquals(1, rested.hitDiceUsed)
     }

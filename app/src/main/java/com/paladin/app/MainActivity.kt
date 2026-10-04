@@ -35,50 +35,57 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             PaladinAppTheme {
-                var selectedTab by remember { mutableStateOf(AppTab.COMBAT) }
                 val viewModel = remember { CharacterViewModel(repository) }
+                val character by viewModel.character.collectAsState()
+                var selectedTab by remember { mutableStateOf(AppTab.COMBAT) }
 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        NavigationBar(containerColor = SurfaceCard) {
-                            AppTab.entries.forEach { tab ->
-                                NavigationBarItem(
-                                    selected = selectedTab == tab,
-                                    onClick = { selectedTab = tab },
-                                    icon = { Icon(tab.icon, contentDescription = tab.title) },
-                                    label = { Text(tab.title) },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = PaladinGold,
-                                        selectedTextColor = PaladinGold,
-                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                if (!character.hasCompletedCreation) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        CharacterCreationScreen(viewModel = viewModel)
+                    }
+                } else {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        bottomBar = {
+                            NavigationBar(containerColor = SurfaceCard) {
+                                AppTab.entries.forEach { tab ->
+                                    NavigationBarItem(
+                                        selected = selectedTab == tab,
+                                        onClick = { selectedTab = tab },
+                                        icon = { Icon(tab.icon, contentDescription = tab.title) },
+                                        label = { Text(tab.title) },
+                                        colors = NavigationBarItemDefaults.colors(
+                                            selectedIconColor = PaladinGold,
+                                            selectedTextColor = PaladinGold,
+                                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
-                    }
-                ) { innerPadding ->
-                    when (selectedTab) {
-                        AppTab.COMBAT -> CombatDashboardScreen(
-                            viewModel = viewModel,
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                        AppTab.WEAPONS -> WeaponsScreen(
-                            viewModel = viewModel,
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                        AppTab.INVENTORY -> InventoryScreen(
-                            viewModel = viewModel,
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                        AppTab.SPELLS -> SpellbookScreen(
-                            viewModel = viewModel,
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                        AppTab.SETTINGS -> LevelUpScreen(
-                            viewModel = viewModel,
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                    ) { innerPadding ->
+                        when (selectedTab) {
+                            AppTab.COMBAT -> CombatDashboardScreen(
+                                viewModel = viewModel,
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                            AppTab.WEAPONS -> WeaponsScreen(
+                                viewModel = viewModel,
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                            AppTab.INVENTORY -> InventoryScreen(
+                                viewModel = viewModel,
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                            AppTab.SPELLS -> SpellbookScreen(
+                                viewModel = viewModel,
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                            AppTab.SETTINGS -> LevelUpScreen(
+                                viewModel = viewModel,
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
                     }
                 }
             }

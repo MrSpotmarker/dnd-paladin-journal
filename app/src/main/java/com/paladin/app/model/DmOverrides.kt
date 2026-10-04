@@ -11,6 +11,7 @@ data class DmOverrides(
     val abilityOverrides: Map<Ability, Int> = emptyMap(),
     val savingThrowBonus: Int = 0,
     val spellDcBonus: Int = 0,
+    val initiativeBonus: Int = 0,
     val notes: String = ""
 ) {
     val isActive: Boolean
@@ -21,5 +22,6 @@ data class DmOverrides(
                 abilityOverrides.isNotEmpty() ||
                 savingThrowBonus != 0 ||
                 spellDcBonus != 0 ||
+                initiativeBonus != 0 ||
                 notes.isNotBlank()
 }

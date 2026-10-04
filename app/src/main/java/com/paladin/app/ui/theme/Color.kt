@@ -11,6 +11,7 @@ val SurfaceCardHighlight = Color(0xFF242E3E)
 val HealthRed = Color(0xFFE06C75)
 val TempHpCyan = Color(0xFF56B6C2)
 val LayOnHandsGreen = Color(0xFF98C379)
+val ProficiencyGreen = Color(0xFF98C379)
 val SpellSlotPurple = Color(0xFFC678DD)
 val SmiteBlue = Color(0xFF61AFEF)
 

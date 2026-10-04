@@ -1,12 +1,21 @@
 package com.paladin.app.model
 
+data class ActiveBuffInfo(
+    val id: String,
+    val name: String,
+    val icon: String,
+    val effectSummary: String,
+    val isConcentration: Boolean = false
+)
+
 data class AttackInfo(
     val item: Item,
     val attackBonus: Int,
     val damageString: String,
     val damageType: String,
     val isMasteryActive: Boolean,
-    val masteryEffect: WeaponMastery?
+    val masteryEffect: WeaponMastery?,
+    val activeBuffNotes: List<String> = emptyList()
 )
 
 data class CalculatedStats(
@@ -36,5 +45,8 @@ data class CalculatedStats(
     val totalWeightLbs: Double,
     val carryCapacityLbs: Double,
     val attacks: List<AttackInfo>,
-    val hasDmOverrides: Boolean
+    val initiative: Int,
+    val speedFt: Int = 30,
+    val hasDmOverrides: Boolean,
+    val activeBuffs: List<ActiveBuffInfo> = emptyList()
 )

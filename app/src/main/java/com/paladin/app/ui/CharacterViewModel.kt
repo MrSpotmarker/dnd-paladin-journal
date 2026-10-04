@@ -140,15 +140,101 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         repository.updateCharacter(character.value.copy(preparedSpellIds = currentPrepared))
     }
 
-    fun updateLevel(newLevel: Int, hpGain: Int, newOath: String? = null) {
+    fun setPreparedSpells(spellIds: Set<String>) {
+        repository.updateCharacter(character.value.copy(preparedSpellIds = spellIds))
+    }
+
+    fun toggleBuff(
+        buffId: String,
+        isConcentration: Boolean = false,
+        slotLevelToConsume: Int? = null,
+        consumesChannelDivinity: Boolean = false
+    ) {
+        val currentBuffs = character.value.activeBuffIds.toMutableSet()
+        val isActivating = buffId !in currentBuffs
+
+        if (isActivating) {
+            // When concentrating on a new spell, end previous concentration spells
+            if (isConcentration) {
+                val concentrationBuffs = setOf(
+                    "srd_bless", "srd_shield_of_faith", "srd_divine_favor",
+                    "srd_heroism", "srd_compelled_duel", "srd_searing_smite",
+                    "srd_wrathful_smite", "srd_thunderous_smite",
+                    "srd_detect_magic", "srd_protection_from_evil_and_good"
+                )
+                currentBuffs.removeAll { it in concentrationBuffs }
+            }
+
+            if (slotLevelToConsume != null) {
+                useSpellSlot(slotLevelToConsume)
+            }
+
+            if (consumesChannelDivinity) {
+                useChannelDivinity()
+            }
+
+            currentBuffs.add(buffId)
+
+            // Heroism gives temp HP equal to CHA mod
+            if (buffId == "srd_heroism") {
+                val chaMod = calculatedStats.value.modifiers[Ability.CHARISMA] ?: 0
+                val heroHp = maxOf(1, chaMod)
+                if (character.value.tempHp < heroHp) {
+                    setTempHp(heroHp)
+                }
+            }
+        } else {
+            currentBuffs.remove(buffId)
+        }
+
+        repository.updateCharacter(character.value.copy(activeBuffIds = currentBuffs))
+    }
+
+    fun deactivateBuff(buffId: String) {
+        val currentBuffs = character.value.activeBuffIds.toMutableSet()
+        if (currentBuffs.remove(buffId)) {
+            repository.updateCharacter(character.value.copy(activeBuffIds = currentBuffs))
+        }
+    }
+
+    fun castInstantSpell(spellId: String, slotLevel: Int = 1): Int? {
+        useSpellSlot(slotLevel)
+        if (spellId == "srd_cure_wounds") {
+            val chaMod = calculatedStats.value.modifiers[Ability.CHARISMA] ?: 0
+            val rolledHeal = (1..8).random() + (1..8).random() + chaMod
+            heal(rolledHeal)
+            return rolledHeal
+        }
+        return null
+    }
+
+    fun harnessDivinePower(slotLevel: Int = 1) {
+        val remainingDivinity = calculatedStats.value.remainingChannelDivinity
+        if (remainingDivinity > 0) {
+            useChannelDivinity()
+            restoreSpellSlot(slotLevel)
+        }
+    }
+
+    fun updateLevel(
+        newLevel: Int,
+        hpGain: Int,
+        newOath: String? = null,
+        newFightingStyle: String? = null,
+        newFeats: List<String>? = null
+    ) {
         val oldLevel = character.value.level
         val levelDiff = (newLevel - oldLevel).coerceAtLeast(0)
         val addedHp = if (hpGain > 0) hpGain else levelDiff * 6
-        val updatedOath = newOath ?: character.value.oath
+        val updatedOath = if (newLevel >= 3) (newOath ?: character.value.oath) else character.value.oath
+        val updatedFightingStyle = if (newLevel >= 2) (newFightingStyle ?: character.value.fightingStyle) else character.value.fightingStyle
+        val updatedFeats = newFeats ?: character.value.feats
 
         val updated = character.value.copy(
             level = newLevel.coerceIn(1, 20),
             oath = updatedOath,
+            fightingStyle = updatedFightingStyle,
+            feats = updatedFeats,
             maxHpManualAdjustment = character.value.maxHpManualAdjustment + (if (hpGain > 0) hpGain - (levelDiff * 6) else 0),
             currentHp = character.value.currentHp + addedHp
         )
@@ -169,6 +255,49 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
 
     fun addCustomSpell(spell: Spell) {
         repository.updateCharacter(character.value.copy(customSpells = character.value.customSpells + spell))
+    }
+
+    fun startNewCharacterCreation() {
+        repository.startNewCharacterCreation()
+    }
+
+    fun updateFeats(feats: List<String>) {
+        repository.updateCharacter(character.value.copy(feats = feats))
+    }
+
+    fun updateBaseAbilityScores(scores: AbilityScores) {
+        repository.updateCharacter(character.value.copy(baseAbilityScores = scores))
+    }
+
+    fun completeCharacterCreation(
+        name: String,
+        abilityScores: AbilityScores,
+        skills: Set<Skill>,
+        weaponMasteries: List<String>,
+        manualHp: Int? = null,
+        initialFeats: List<String> = listOf("Alert (Wachsam)", "Savage Attacker (Brutaler Angreifer)", "Dueling (Duellieren)")
+    ) {
+        val conMod = Ability.calculateModifier(abilityScores.constitution)
+        val maxHp = (manualHp ?: (10 + conMod)).coerceAtLeast(1)
+        val updated = character.value.copy(
+            name = name.ifBlank { "Sir Valerius" },
+            level = 1,
+            hasCompletedCreation = true,
+            baseAbilityScores = abilityScores,
+            currentHp = maxHp,
+            tempHp = 0,
+            hitDiceUsed = 0,
+            layOnHandsUsed = 0,
+            channelDivinityUsed = 0,
+            proficientSkills = skills,
+            masteredWeaponNames = weaponMasteries,
+            feats = initialFeats,
+            fightingStyle = initialFeats.firstOrNull { it.contains("Dueling", ignoreCase = true) || it.contains("Defense", ignoreCase = true) },
+            preparedSpellIds = setOf("srd_bless", "srd_cure_wounds", "srd_paladins_smite", "srd_shield_of_faith"),
+            spellSlotUsages = emptyMap(),
+            dmOverrides = DmOverrides()
+        )
+        repository.updateCharacter(updated)
     }
 
     fun exportBackupJson(): String = repository.exportCharacterToJson()

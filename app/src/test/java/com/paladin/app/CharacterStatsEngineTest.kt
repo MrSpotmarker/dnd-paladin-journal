@@ -163,4 +163,153 @@ class CharacterStatsEngineTest {
         assertTrue(attack.isMasteryActive)
         assertEquals(WeaponMastery.SAP, attack.masteryEffect)
     }
+
+    @Test
+    fun testDefenseFightingStyleAcBonus() {
+        val chainMail = Item(
+            id = "chain_mail",
+            name = "Chain Mail",
+            type = ItemType.ARMOR,
+            armorType = ArmorType.HEAVY,
+            baseAc = 16,
+            isEquipped = true
+        )
+        val characterWithoutDefense = CharacterSheet(
+            level = 2,
+            inventory = listOf(chainMail)
+        )
+        val stats1 = CharacterStatsEngine.calculate(characterWithoutDefense)
+        assertEquals(16, stats1.armorClass)
+
+        val characterWithDefense = CharacterSheet(
+            level = 2,
+            fightingStyle = "Defense",
+            inventory = listOf(chainMail)
+        )
+        val stats2 = CharacterStatsEngine.calculate(characterWithDefense)
+        assertEquals("Defense style should add +1 AC when wearing armor", 17, stats2.armorClass)
+        assertTrue(stats2.armorClassBreakdown.contains("Defense (+1)"))
+    }
+
+    @Test
+    fun testDuelingFightingStyleBonus() {
+        val longsword = Item(
+            id = "longsword",
+            name = "Longsword",
+            type = ItemType.WEAPON,
+            damageDice = "1d8",
+            damageType = "Slashing",
+            isEquipped = true
+        )
+        val characterWithDueling = CharacterSheet(
+            level = 2,
+            baseAbilityScores = AbilityScores(strength = 16), // +3
+            fightingStyle = "Dueling",
+            inventory = listOf(longsword)
+        )
+        val stats = CharacterStatsEngine.calculate(characterWithDueling)
+        assertEquals(1, stats.attacks.size)
+        assertTrue("Damage should include +2 Duellieren bonus", stats.attacks[0].damageString.contains("inkl. +2 Duellieren"))
+    }
+
+    @Test
+    fun testMultipleFeatsDefenseAndDuelingAndAlert() {
+        val chainMail = Item(
+            id = "chain_mail",
+            name = "Chain Mail",
+            type = ItemType.ARMOR,
+            armorType = ArmorType.HEAVY,
+            baseAc = 16,
+            isEquipped = true
+        )
+        val longsword = Item(
+            id = "longsword",
+            name = "Longsword",
+            type = ItemType.WEAPON,
+            damageDice = "1d8",
+            damageType = "Slashing",
+            isEquipped = true
+        )
+        val character = CharacterSheet(
+            level = 2,
+            baseAbilityScores = AbilityScores(strength = 16, dexterity = 10),
+            feats = listOf("Alert (Wachsam)", "Defense", "Dueling", "Savage Attacker"),
+            inventory = listOf(chainMail, longsword)
+        )
+        val stats = CharacterStatsEngine.calculate(character)
+        // Alert gives +PB (+2 at lvl 2) to initiative (dex 0 + 2 = 2)
+        assertEquals(2, stats.initiative)
+        // Defense gives +1 AC on top of 16 = 17
+        assertEquals(17, stats.armorClass)
+        // Dueling gives +2 damage on Longsword
+        assertTrue(stats.attacks[0].damageString.contains("inkl. +2 Duellieren"))
+    }
+
+    @Test
+    fun testShieldOfFaithAcBuff() {
+        val chainMail = Item(
+            id = "chain_mail",
+            name = "Chain Mail",
+            type = ItemType.ARMOR,
+            armorType = ArmorType.HEAVY,
+            baseAc = 16,
+            isEquipped = true
+        )
+        val character = CharacterSheet(
+            level = 1,
+            inventory = listOf(chainMail),
+            activeBuffIds = setOf("srd_shield_of_faith")
+        )
+        val stats = CharacterStatsEngine.calculate(character)
+        assertEquals("Shield of Faith should add +2 AC (16 + 2 = 18)", 18, stats.armorClass)
+        assertTrue(stats.armorClassBreakdown.contains("Shield of Faith (+2)"))
+        assertEquals(1, stats.activeBuffs.size)
+        assertEquals("Shield of Faith (Glaubensschild)", stats.activeBuffs[0].name)
+    }
+
+    @Test
+    fun testSacredWeaponChannelDivinityBuff() {
+        val longsword = Item(
+            id = "longsword",
+            name = "Longsword",
+            type = ItemType.WEAPON,
+            damageDice = "1d8",
+            damageType = "Slashing",
+            isEquipped = true
+        )
+        val character = CharacterSheet(
+            level = 3,
+            baseAbilityScores = AbilityScores(strength = 16, charisma = 16), // STR +3, CHA +3, PB 2
+            inventory = listOf(longsword),
+            activeBuffIds = setOf("sacred_weapon")
+        )
+        val stats = CharacterStatsEngine.calculate(character)
+        val attack = stats.attacks[0]
+        // 2 (PB) + 3 (STR) + 3 (Sacred Weapon) = 8
+        assertEquals(8, attack.attackBonus)
+        assertTrue(attack.activeBuffNotes.any { it.contains("Heilige Waffe") })
+    }
+
+    @Test
+    fun testBlessAndDivineFavorBuffs() {
+        val longsword = Item(
+            id = "longsword",
+            name = "Longsword",
+            type = ItemType.WEAPON,
+            damageDice = "1d8",
+            damageType = "Slashing",
+            isEquipped = true
+        )
+        val character = CharacterSheet(
+            level = 1,
+            baseAbilityScores = AbilityScores(strength = 16),
+            inventory = listOf(longsword),
+            activeBuffIds = setOf("srd_bless", "srd_divine_favor")
+        )
+        val stats = CharacterStatsEngine.calculate(character)
+        val attack = stats.attacks[0]
+        assertTrue("Divine Favor adds 1d4 radiant", attack.damageString.contains("+ 1d4 Radiant"))
+        assertTrue("Bless is noted in buffs", attack.activeBuffNotes.any { it.contains("Segen") })
+        assertEquals(2, stats.activeBuffs.size)
+    }
 }

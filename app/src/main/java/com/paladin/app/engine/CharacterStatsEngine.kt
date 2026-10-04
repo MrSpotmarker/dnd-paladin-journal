@@ -26,7 +26,8 @@ object CharacterStatsEngine {
         // 2. Max HP
         val baseLvl1Hp = 10 + conMod
         val higherLvlHp = if (level > 1) (level - 1) * (6 + conMod) else 0
-        val maxHp = max(1, baseLvl1Hp + higherLvlHp + character.maxHpManualAdjustment + character.dmOverrides.hpMaxBonus)
+        val toughBonus = if (character.feats.any { it.contains("Tough", ignoreCase = true) }) level * 2 else 0
+        val maxHp = max(1, baseLvl1Hp + higherLvlHp + toughBonus + character.maxHpManualAdjustment + character.dmOverrides.hpMaxBonus)
 
         // 3. Rüstungsklasse (AC)
         val (ac, acBreakdown) = calculateArmorClass(character, dexMod)
@@ -76,8 +77,60 @@ object CharacterStatsEngine {
         val attacks = character.inventory
             .filter { it.type == ItemType.WEAPON && it.isEquipped }
             .map { weapon ->
-                calculateAttack(weapon, pb, strMod, dexMod, character.masteredWeaponNames)
+                calculateAttack(
+                    weapon = weapon,
+                    pb = pb,
+                    strMod = strMod,
+                    dexMod = dexMod,
+                    chaMod = chaMod,
+                    masteredWeapons = character.masteredWeaponNames,
+                    fightingStyle = character.fightingStyle,
+                    feats = character.feats,
+                    activeBuffIds = character.activeBuffIds
+                )
             }
+
+        val hasAlert = character.feats.any { it.contains("Alert", ignoreCase = true) }
+        val alertBonus = if (hasAlert) pb else 0
+        val initiative = dexMod + alertBonus + character.dmOverrides.initiativeBonus
+
+        val activeBuffList = mutableListOf<ActiveBuffInfo>()
+        if (character.activeBuffIds.any { it.equals("srd_shield_of_faith", ignoreCase = true) || it.equals("shield_of_faith", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_shield_of_faith", "Shield of Faith (Glaubensschild)", "🛡️", "+2 Rüstungsklasse (AC)", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_bless", ignoreCase = true) || it.equals("bless", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_bless", "Bless (Segen)", "✨", "+1d4 auf Angriffe & Rettungswürfe", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_divine_favor", ignoreCase = true) || it.equals("divine_favor", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_divine_favor", "Divine Favor (Göttliche Gunst)", "⚔️", "+1d4 Gleißender Schaden", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_heroism", ignoreCase = true) || it.equals("heroism", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_heroism", "Heroism (Heldenmut)", "🦁", "Immunität Furcht, +${max(1, chaMod)} Temp-HP/Runde", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_compelled_duel", ignoreCase = true) || it.equals("compelled_duel", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_compelled_duel", "Compelled Duel (Erzwungenes Duell)", "🤺", "Ziel an dich gebunden", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_protection_from_evil_and_good", ignoreCase = true) || it.equals("protection_from_evil_and_good", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_protection_from_evil_and_good", "Protection from Evil & Good", "🛡️", "Unholde/Untote haben Nachteil", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_searing_smite", ignoreCase = true) || it.equals("searing_smite", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_searing_smite", "Searing Smite", "🔥", "+1d6 Feuerschaden & Brand", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_wrathful_smite", ignoreCase = true) || it.equals("wrathful_smite", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_wrathful_smite", "Wrathful Smite", "👻", "+1d6 Psychisch & Furcht", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_detect_magic", ignoreCase = true) || it.equals("detect_magic", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_detect_magic", "Detect Magic (Magie entdecken)", "🔮", "Auren innerhalb 30ft spürbar", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("sacred_weapon", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("sacred_weapon", "Heilige Waffe (Sacred Weapon)", "🌟", "+${max(1, chaMod)} Waffen-Angriffsbonus, 20ft Licht", isConcentration = false))
+        }
+        if (character.activeBuffIds.any { it.equals("vow_of_enmity", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("vow_of_enmity", "Gelübde der Feindschaft (Vow of Enmity)", "🎯", "Vorteil auf Angriffe", isConcentration = false))
+        }
+        if (character.activeBuffIds.any { it.equals("divine_sense", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("divine_sense", "Göttliches Gespür (Divine Sense)", "👁️", "Spürt Himmlische, Unholde & Untote (60ft)", isConcentration = false))
+        }
 
         return CalculatedStats(
             proficiencyBonus = pb,
@@ -106,7 +159,10 @@ object CharacterStatsEngine {
             totalWeightLbs = totalWeight,
             carryCapacityLbs = carryCapacity,
             attacks = attacks,
-            hasDmOverrides = character.dmOverrides.isActive
+            initiative = initiative,
+            speedFt = 30,
+            hasDmOverrides = character.dmOverrides.isActive,
+            activeBuffs = activeBuffList
         )
     }
 
@@ -205,6 +261,23 @@ object CharacterStatsEngine {
             breakdownParts.add("DM Bonus (+${character.dmOverrides.acBonus})")
         }
 
+        // Defense Fighting Style (+1 AC wenn Rüstung getragen wird)
+        val hasDefense = character.fightingStyle?.equals("Defense", ignoreCase = true) == true ||
+                character.feats.any { it.contains("Defense", ignoreCase = true) }
+        if (hasDefense && equippedArmor != null) {
+            baseAc += 1
+            breakdownParts.add("Defense (+1)")
+        }
+
+        // Aktiver Zauber-Buff: Shield of Faith (+2 AC)
+        val hasShieldOfFaith = character.activeBuffIds.any {
+            it.equals("srd_shield_of_faith", ignoreCase = true) || it.equals("shield_of_faith", ignoreCase = true)
+        }
+        if (hasShieldOfFaith) {
+            baseAc += 2
+            breakdownParts.add("Shield of Faith (+2)")
+        }
+
         return baseAc to breakdownParts.joinToString(" + ")
     }
 
@@ -213,17 +286,52 @@ object CharacterStatsEngine {
         pb: Int,
         strMod: Int,
         dexMod: Int,
-        masteredWeapons: List<String>
+        chaMod: Int = 0,
+        masteredWeapons: List<String>,
+        fightingStyle: String? = null,
+        feats: List<String> = emptyList(),
+        activeBuffIds: Set<String> = emptySet()
     ): AttackInfo {
         val useDex = weapon.isFinesse && dexMod > strMod
         val abilityMod = if (useDex) dexMod else strMod
         val itemAttackBonus = weapon.effects.filterIsInstance<ItemEffect.AttackBonus>().sumOf { it.bonus }
         val itemDamageBonus = weapon.effects.filterIsInstance<ItemEffect.DamageBonus>().sumOf { it.bonus }
 
-        val totalAttackBonus = pb + abilityMod + itemAttackBonus
-        val totalDamageMod = abilityMod + itemDamageBonus
+        val hasDueling = (fightingStyle?.equals("Dueling", ignoreCase = true) == true ||
+                feats.any { it.contains("Dueling", ignoreCase = true) }) && !weapon.isTwoHanded
+        val duelingBonus = if (hasDueling) 2 else 0
+
+        // Channel Divinity: Sacred Weapon (+CHA to attack rolls)
+        val isSacredWeapon = activeBuffIds.any { it.equals("sacred_weapon", ignoreCase = true) }
+        val sacredWeaponBonus = if (isSacredWeapon) max(1, chaMod) else 0
+
+        val totalAttackBonus = pb + abilityMod + itemAttackBonus + sacredWeaponBonus
+        val totalDamageMod = abilityMod + itemDamageBonus + duelingBonus
         val damageSign = if (totalDamageMod >= 0) "+ $totalDamageMod" else "- ${-totalDamageMod}"
-        val damageStr = "${weapon.damageDice} $damageSign"
+        val duelingSuffix = if (hasDueling) " (inkl. +2 Duellieren)" else ""
+        
+        var damageStr = "${weapon.damageDice} $damageSign$duelingSuffix"
+
+        val buffNotes = mutableListOf<String>()
+        if (isSacredWeapon) {
+            buffNotes.add("🌟 Heilige Waffe aktiv (+${sacredWeaponBonus} ATK, 20ft Licht)")
+        }
+        if (activeBuffIds.any { it.equals("srd_bless", ignoreCase = true) || it.equals("bless", ignoreCase = true) }) {
+            buffNotes.add("✨ Segen aktiv (+1d4 auf Angriffswürfe)")
+        }
+        if (activeBuffIds.any { it.equals("vow_of_enmity", ignoreCase = true) }) {
+            buffNotes.add("🎯 Gelübde der Feindschaft aktiv (Vorteil auf Angriffswürfe)")
+        }
+        if (activeBuffIds.any { it.equals("srd_divine_favor", ignoreCase = true) || it.equals("divine_favor", ignoreCase = true) }) {
+            damageStr += " + 1d4 Radiant"
+            buffNotes.add("⚔️ Göttliche Gunst aktiv (+1d4 Gleißender Schaden)")
+        }
+        if (activeBuffIds.any { it.equals("srd_searing_smite", ignoreCase = true) || it.equals("searing_smite", ignoreCase = true) }) {
+            buffNotes.add("🔥 Sengender Smite aktiv (+1d6 Feuerschaden & Brand)")
+        }
+        if (activeBuffIds.any { it.equals("srd_wrathful_smite", ignoreCase = true) || it.equals("wrathful_smite", ignoreCase = true) }) {
+            buffNotes.add("👻 Zorniger Smite aktiv (+1d6 Psychisch & Verängstigt)")
+        }
 
         val isMastered = masteredWeapons.any { it.equals(weapon.name, ignoreCase = true) }
 
@@ -233,7 +341,8 @@ object CharacterStatsEngine {
             damageString = damageStr,
             damageType = weapon.damageType,
             isMasteryActive = isMastered && weapon.mastery != null,
-            masteryEffect = if (isMastered) weapon.mastery else null
+            masteryEffect = if (isMastered) weapon.mastery else null,
+            activeBuffNotes = buffNotes
         )
     }
 

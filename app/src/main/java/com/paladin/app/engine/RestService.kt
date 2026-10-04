@@ -32,7 +32,8 @@ object RestService {
         return character.copy(
             currentHp = newHp,
             hitDiceUsed = newHitDiceUsed,
-            channelDivinityUsed = newChannelDivinityUsed
+            channelDivinityUsed = newChannelDivinityUsed,
+            activeBuffIds = emptySet()
         )
     }
 
@@ -45,6 +46,7 @@ object RestService {
      * - Channel Divinity wird vollständig aufgefüllt (channelDivinityUsed = 0).
      * - Die Hälfte der Trefferwürfel (mindestens 1) wird regeneriert.
      * - Todes-Rettungswürfe werden zurückgesetzt.
+     * - Alle temporären Zauber und Buffs enden.
      */
     fun performLongRest(character: CharacterSheet, maxHp: Int): CharacterSheet {
         val recoveredHitDice = max(1, character.level / 2)
@@ -57,6 +59,7 @@ object RestService {
             layOnHandsUsed = 0,
             channelDivinityUsed = 0,
             spellSlotUsages = emptyMap(),
+            activeBuffIds = emptySet(),
             deathSaves = DeathSavesState(successes = 0, failures = 0)
         )
     }

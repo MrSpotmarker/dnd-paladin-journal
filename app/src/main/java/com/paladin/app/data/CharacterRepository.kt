@@ -95,6 +95,11 @@ class CharacterRepository(private val context: Context) {
         }
     }
 
+    fun startNewCharacterCreation() {
+        val blank = createDefaultCharacter().copy(hasCompletedCreation = false)
+        updateCharacter(blank)
+    }
+
     private fun createDefaultCharacter(): CharacterSheet {
         val longsword = Item(
             id = "start_longsword",
