@@ -43,6 +43,14 @@ data class DeathSavesState(
 )
 
 @Serializable
+data class JournalEntry(
+    val id: String = UUID.randomUUID().toString(),
+    val dateText: String = "",
+    val content: String = "",
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Serializable
 data class CharacterSheet(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "Sir Galahad",
@@ -68,5 +76,6 @@ data class CharacterSheet(
     val dmOverrides: DmOverrides = DmOverrides(),
     val goldPieces: Double = 15.0,
     val deathSaves: DeathSavesState = DeathSavesState(),
-    val notes: String = ""
+    val notes: String = "",
+    val journalEntries: List<JournalEntry> = emptyList()
 )

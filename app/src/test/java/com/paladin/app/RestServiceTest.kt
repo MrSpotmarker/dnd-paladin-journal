@@ -27,10 +27,41 @@ class RestServiceTest {
     }
 
     @Test
-    fun testHealingCappedAtMaxHp() {
-        val character = CharacterSheet(currentHp = 15)
-        val healed = RestService.applyHealing(character, 10, maxHp = 20)
-        assertEquals(20, healed.currentHp)
+    fun testHealingOverflowsIntoTempHp() {
+        val character = CharacterSheet(currentHp = 25, tempHp = 0)
+        // 25 HP + 5 healing with max HP 27 -> currentHp 27, tempHp 3 (27+3)
+        val healed = RestService.applyHealing(character, 5, maxHp = 27)
+        assertEquals(27, healed.currentHp)
+        assertEquals(3, healed.tempHp)
+
+        // Additional 5 healing while already at max HP -> tempHp increases to 8 (27+8)
+        val healedMore = RestService.applyHealing(healed, 5, maxHp = 27)
+        assertEquals(27, healedMore.currentHp)
+        assertEquals(8, healedMore.tempHp)
+    }
+
+    @Test
+    fun testShortRestPreservesTempHpAndHandlesOverflow() {
+        val character = CharacterSheet(
+            level = 3,
+            currentHp = 24,
+            tempHp = 3,
+            hitDiceUsed = 0,
+            channelDivinityUsed = 1
+        )
+
+        // Short rest rolls 6 HP healing, with max HP 27 -> 24 + 6 = 30 -> 27 HP + (3 + 3) = 6 temp HP
+        val rested = RestService.performShortRest(
+            character = character,
+            hitDiceToSpend = 1,
+            totalHpHealed = 6,
+            maxHp = 27
+        )
+
+        assertEquals(27, rested.currentHp)
+        assertEquals(6, rested.tempHp)
+        assertEquals(1, rested.hitDiceUsed)
+        assertEquals(0, rested.channelDivinityUsed)
     }
 
     @Test

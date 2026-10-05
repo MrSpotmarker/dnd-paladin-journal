@@ -1,6 +1,6 @@
 package com.paladin.app.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,9 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,141 +19,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.paladin.app.model.ActiveBuffInfo
 import com.paladin.app.model.Spell
+import com.paladin.app.model.SpellSlotState
 import com.paladin.app.ui.theme.*
 
 @Composable
-fun ActiveBuffsBanner(
-    activeBuffs: List<ActiveBuffInfo>,
-    onDismissBuff: (String) -> Unit
-) {
-    if (activeBuffs.isEmpty()) return
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-        shape = RoundedCornerShape(14.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, PaladinGold.copy(alpha = 0.6f))
-    ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text("⚡", fontSize = 14.sp)
-                    Text(
-                        text = "Aktive Zauber & Effekte",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PaladinGoldBright
-                    )
-                }
-
-                val hasConcentration = activeBuffs.any { it.isConcentration }
-                if (hasConcentration) {
-                    Surface(
-                        color = SmiteBlue.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(6.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, SmiteBlue)
-                    ) {
-                        Text(
-                            text = "🔮 Konzentration aktiv",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = SmiteBlue,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(color = BorderDark)
-
-            // Chips for each active buff
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                activeBuffs.forEach { buff ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(SurfaceCardHighlight)
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(buff.icon, fontSize = 16.sp)
-                            Column {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = buff.name,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
-                                    )
-                                    if (buff.isConcentration) {
-                                        Text(
-                                            text = "(K)",
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = SmiteBlue
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = buff.effectSummary,
-                                    fontSize = 11.sp,
-                                    color = PaladinGold
-                                )
-                            }
-                        }
-
-                        IconButton(
-                            onClick = { onDismissBuff(buff.id) },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Effekt beenden",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PreparedSpellsSection(
+fun SpellsAndSlotsSection(
+    spellSlots: List<SpellSlotState>,
     preparedSpells: List<Spell>,
     maxPrepared: Int,
-    hasAvailableSlots: Boolean,
     activeBuffIds: Set<String>,
     chaMod: Int,
+    onUseSlot: (Int) -> Unit,
+    onRestoreSlot: (Int) -> Unit,
     onOpenSelectDialog: () -> Unit,
     onToggleBuff: (buffId: String, isConcentration: Boolean, consumeSlot: Boolean) -> Unit,
-    onCastInstant: (spellId: String) -> Unit
+    onCastInstant: (spellId: String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val hasAvailableSlots = spellSlots.any { it.remainingSlots > 0 }
+    var isExpanded by remember { mutableStateOf(true) }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderDark))
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             // Header
@@ -163,59 +53,159 @@ fun PreparedSpellsSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Vorbereitete Zauber",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PaladinGold
-                    )
-                    Text(
-                        text = "${preparedSpells.size} / $maxPrepared vorbereitet",
-                        fontSize = 11.sp,
-                        color = if (preparedSpells.size > maxPrepared) HealthRed else TextSecondary,
-                        fontWeight = FontWeight.Medium
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { isExpanded = !isExpanded }
+                ) {
+                    Text("✨", fontSize = 16.sp)
+                    Column {
+                        Text(
+                            text = "Zauber & Zauberplätze",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PaladinGold
+                        )
+                        val totalSlots = spellSlots.sumOf { it.maxSlots }
+                        val remainingSlots = spellSlots.sumOf { it.remainingSlots }
+                        Text(
+                            text = "${preparedSpells.size}/$maxPrepared vorbereitet • $remainingSlots/$totalSlots Slots frei",
+                            fontSize = 11.sp,
+                            color = if (preparedSpells.size > maxPrepared) HealthRed else TextSecondary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
 
-                FilledTonalButton(
-                    onClick = onOpenSelectDialog,
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                    modifier = Modifier.height(30.dp)
-                ) {
-                    Text("✏️ Zauber wählen", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FilledTonalButton(
+                        onClick = onOpenSelectDialog,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier.height(28.dp)
+                    ) {
+                        Text("✏️ Zauber", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    IconButton(
+                        onClick = { isExpanded = !isExpanded },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isExpanded) "Zauber einklappen" else "Zauber ausklappen",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
-            HorizontalDivider(color = BorderDark)
-
-            if (preparedSpells.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
+            // Compact Spell Slot Tracker
+            if (spellSlots.isNotEmpty()) {
+                Surface(
+                    color = SurfaceCardHighlight,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Keine Zauber vorbereitet.\nTippe auf 'Zauber wählen', um deine Paladin-Zauber auszurüsten.",
-                        color = TextSecondary,
-                        fontSize = 12.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        spellSlots.forEach { slot ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = "Grad ${slot.level} Slots:",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = SpellSlotPurple
+                                    )
+                                    Text(
+                                        text = "(${slot.remainingSlots}/${slot.maxSlots} frei)",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    (0 until slot.maxSlots).forEach { index ->
+                                        val isUsed = index < slot.usedSlots
+                                        Box(
+                                            modifier = Modifier
+                                                .size(26.dp)
+                                                .clip(CircleShape)
+                                                .background(if (isUsed) SurfaceCard else SpellSlotPurple)
+                                                .border(
+                                                    width = 1.5.dp,
+                                                    color = if (isUsed) BorderDark else SpellSlotPurple,
+                                                    shape = CircleShape
+                                                )
+                                                .clickable {
+                                                    if (isUsed) onRestoreSlot(slot.level) else onUseSlot(slot.level)
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (!isUsed) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(9.dp)
+                                                        .clip(CircleShape)
+                                                        .background(Color.White)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-            } else {
+            }
+
+            // Expandable List of Prepared Spells
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    preparedSpells.forEach { spell ->
-                        PreparedSpellCombatRow(
-                            spell = spell,
-                            isActiveBuff = spell.id in activeBuffIds,
-                            hasAvailableSlots = hasAvailableSlots,
-                            chaMod = chaMod,
-                            onToggleBuff = { consumeSlot ->
-                                onToggleBuff(spell.id, spell.isConcentration, consumeSlot)
-                            },
-                            onCastInstant = { onCastInstant(spell.id) }
-                        )
+                    HorizontalDivider(color = BorderDark)
+
+                    if (preparedSpells.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Keine Zauber vorbereitet.\nTippe auf '✏️ Zauber', um Paladin-Zauber auszurüsten.",
+                                color = TextSecondary,
+                                fontSize = 12.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    } else {
+                        preparedSpells.forEach { spell ->
+                            PreparedSpellCombatRow(
+                                spell = spell,
+                                isActiveBuff = spell.id in activeBuffIds,
+                                hasAvailableSlots = hasAvailableSlots,
+                                chaMod = chaMod,
+                                onToggleBuff = { consumeSlot ->
+                                    onToggleBuff(spell.id, spell.isConcentration, consumeSlot)
+                                },
+                                onCastInstant = { onCastInstant(spell.id) }
+                            )
+                        }
                     }
                 }
             }
@@ -362,7 +352,11 @@ fun PreparedSpellCombatRow(
                 }
             }
 
-            AnimatedVisibility(visible = isExpanded) {
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
                     HorizontalDivider(color = BorderDark)
                     Spacer(modifier = Modifier.height(6.dp))

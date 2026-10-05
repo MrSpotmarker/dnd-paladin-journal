@@ -15,7 +15,9 @@ data class AttackInfo(
     val damageType: String,
     val isMasteryActive: Boolean,
     val masteryEffect: WeaponMastery?,
-    val activeBuffNotes: List<String> = emptyList()
+    val activeBuffNotes: List<String> = emptyList(),
+    val damageBreakdown: List<String> = emptyList(),
+    val attackBreakdown: String = ""
 )
 
 data class CalculatedStats(

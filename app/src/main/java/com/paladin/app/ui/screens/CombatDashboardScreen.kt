@@ -1,5 +1,6 @@
 package com.paladin.app.ui.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -67,29 +70,6 @@ fun CombatDashboardScreen(
             onOpenFeats = { showFeatsDialog = true }
         )
 
-        // Rest Action Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Button(
-                onClick = { showShortRestDialog = true },
-                colors = ButtonDefaults.buttonColors(containerColor = SurfaceCardHighlight, contentColor = TextPrimary),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text("☕ Kurze Rast", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            }
-            Button(
-                onClick = { showLongRestDialog = true },
-                colors = ButtonDefaults.buttonColors(containerColor = PaladinGold, contentColor = DarkNavyBackground),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text("🏕️ Lange Rast", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            }
-        }
-
         // Active Buffs Banner (Shield of Faith, Bless, Sacred Weapon, etc.)
         if (stats.activeBuffs.isNotEmpty()) {
             ActiveBuffsBanner(
@@ -108,12 +88,28 @@ fun CombatDashboardScreen(
             onSetTempHp = { viewModel.setTempHp(it) }
         )
 
-        // Lay on Hands Card
-        LayOnHandsCard(
-            remaining = stats.remainingLayOnHands,
-            maxPool = stats.maxLayOnHands,
-            onUse = { viewModel.useLayOnHands(it) },
-            onCureCondition = { viewModel.cureConditionLayOnHands() }
+        // Equipped Weapons & Attacks Card
+        EquippedWeaponsCard(
+            attacks = stats.attacks
+        )
+
+        // Unified Spells & Spell Slots Section
+        SpellsAndSlotsSection(
+            spellSlots = stats.spellSlots,
+            preparedSpells = preparedSpells,
+            maxPrepared = stats.maxPreparedSpells,
+            activeBuffIds = character.activeBuffIds,
+            chaMod = chaMod,
+            onUseSlot = { viewModel.useSpellSlot(it) },
+            onRestoreSlot = { viewModel.restoreSpellSlot(it) },
+            onOpenSelectDialog = { showPreparedSpellsDialog = true },
+            onToggleBuff = { buffId, isConcentration, consumeSlot ->
+                val slotToConsume = if (consumeSlot) 1 else null
+                viewModel.toggleBuff(buffId, isConcentration, slotToConsume)
+            },
+            onCastInstant = { spellId ->
+                viewModel.castInstantSpell(spellId, 1)
+            }
         )
 
         // Channel Divinity (Level 3+)
@@ -141,31 +137,12 @@ fun CombatDashboardScreen(
             )
         }
 
-        // Spell Slots Tracker
-        if (stats.spellSlots.isNotEmpty()) {
-            SpellSlotsTracker(
-                slots = stats.spellSlots,
-                onUseSlot = { viewModel.useSpellSlot(it) },
-                onRestoreSlot = { viewModel.restoreSpellSlot(it) }
-            )
-        }
-
-        // Prepared Spells & Quick Cast / Buff Toggle Section
-        val hasAvailableSlots = stats.spellSlots.any { it.remainingSlots > 0 }
-        PreparedSpellsSection(
-            preparedSpells = preparedSpells,
-            maxPrepared = stats.maxPreparedSpells,
-            hasAvailableSlots = hasAvailableSlots,
-            activeBuffIds = character.activeBuffIds,
-            chaMod = chaMod,
-            onOpenSelectDialog = { showPreparedSpellsDialog = true },
-            onToggleBuff = { buffId, isConcentration, consumeSlot ->
-                val slotToConsume = if (consumeSlot) 1 else null
-                viewModel.toggleBuff(buffId, isConcentration, slotToConsume)
-            },
-            onCastInstant = { spellId ->
-                viewModel.castInstantSpell(spellId, 1)
-            }
+        // Lay on Hands Card
+        LayOnHandsCard(
+            remaining = stats.remainingLayOnHands,
+            maxPool = stats.maxLayOnHands,
+            onUse = { viewModel.useLayOnHands(it) },
+            onCureCondition = { viewModel.cureConditionLayOnHands() }
         )
 
         // Ability Scores & Saves Header with Edit & Expand buttons
@@ -257,65 +234,34 @@ fun CombatDashboardScreen(
         }
 
         // Expanded Skills & Checks breakdown
-        if (isSkillsExpanded) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-                shape = RoundedCornerShape(12.dp)
+        SkillsSection(
+            isExpanded = isSkillsExpanded,
+            skillModifiers = stats.skillModifiers,
+            proficientSkills = character.proficientSkills
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Rest Action Buttons (at bottom of screen)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Button(
+                onClick = { showShortRestDialog = true },
+                colors = ButtonDefaults.buttonColors(containerColor = SurfaceCardHighlight, contentColor = TextPrimary),
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(10.dp)
             ) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "🎲 Fertigkeiten & Skill Checks",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = PaladinGold
-                        )
-                        val passivePerception = 10 + (stats.skillModifiers[Skill.PERCEPTION] ?: 0)
-                        Text(
-                            text = "Passive Wahrnehmung: $passivePerception",
-                            fontSize = 11.sp,
-                            color = TextSecondary
-                        )
-                    }
-
-                    HorizontalDivider(color = BorderDark)
-
-                    val allSkills = Skill.entries
-                    val firstHalf = allSkills.take(9)
-                    val secondHalf = allSkills.drop(9)
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Left column
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            firstHalf.forEach { skill ->
-                                SkillCheckRow(
-                                    skill = skill,
-                                    modifier = stats.skillModifiers[skill] ?: 0,
-                                    isProficient = skill in character.proficientSkills
-                                )
-                            }
-                        }
-
-                        // Right column
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            secondHalf.forEach { skill ->
-                                SkillCheckRow(
-                                    skill = skill,
-                                    modifier = stats.skillModifiers[skill] ?: 0,
-                                    isProficient = skill in character.proficientSkills
-                                )
-                            }
-                        }
-                    }
-                }
+                Text("☕ Kurze Rast", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+            Button(
+                onClick = { showLongRestDialog = true },
+                colors = ButtonDefaults.buttonColors(containerColor = PaladinGold, contentColor = DarkNavyBackground),
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("🏕️ Lange Rast", fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }
@@ -389,409 +335,6 @@ fun CombatDashboardScreen(
                 viewModel.setPreparedSpells(updatedPreparedIds)
                 showPreparedSpellsDialog = false
             }
-        )
-    }
-}
-
-@Composable
-fun CharacterHeader(
-    character: CharacterSheet,
-    stats: CalculatedStats,
-    onOpenOverrides: () -> Unit,
-    onOpenFeats: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = character.name,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    val subtitleParts = buildList {
-                        add("Stufe ${character.level} Paladin")
-                        character.oath?.let { add(it) }
-                    }
-                    Text(
-                        text = subtitleParts.joinToString(" • "),
-                        fontSize = 13.sp,
-                        color = PaladinGold
-                    )
-                }
-
-                IconButton(
-                    onClick = onOpenOverrides,
-                    modifier = Modifier
-                        .background(
-                            if (stats.hasDmOverrides) PaladinGold.copy(alpha = 0.2f) else SurfaceCardHighlight,
-                            CircleShape
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Build,
-                        contentDescription = "DM Overrides",
-                        tint = if (stats.hasDmOverrides) PaladinGold else TextSecondary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Quick Stats Row: AC, PB, Hit Dice
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                HeaderStatItem(label = "Rüstungsklasse (AC)", value = "${stats.armorClass}")
-                HeaderStatItem(label = "Übungsbonus (PB)", value = "+${stats.proficiencyBonus}")
-                HeaderStatItem(label = "Trefferwürfel", value = "${stats.remainingHitDice}/${stats.maxHitDice} d10")
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Subtle Compact Feats Bar
-            val featLimit = com.paladin.app.model.FeatCatalog.getStandardFeatLimit(character.level)
-            val isOver = character.feats.size > featLimit
-            val featsText = if (character.feats.isEmpty()) {
-                "Keine Talente aktiv • Tippe zum Auswählen"
-            } else {
-                character.feats.joinToString(" • ") { it.substringBefore(" (") }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(SurfaceCardHighlight.copy(alpha = 0.5f))
-                    .clickable { onOpenFeats() }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text("✨", fontSize = 11.sp)
-                    Text(
-                        text = featsText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = PaladinGold,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.padding(start = 6.dp)
-                ) {
-                    Text(
-                        text = "${character.feats.size}/$featLimit",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isOver) HealthRed else ProficiencyGreen
-                    )
-                    Text("✏️", fontSize = 10.sp)
-                }
-            }
-
-            if (stats.hasDmOverrides) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "⚡ Aktive DM Overrides/Hausregeln",
-                    fontSize = 11.sp,
-                    color = PaladinGoldBright,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun HeaderStatItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Black, color = PaladinGold)
-        Text(text = label, fontSize = 11.sp, color = TextSecondary)
-    }
-}
-
-@Composable
-fun ChannelDivinityCard(
-    remaining: Int,
-    maxUses: Int,
-    oath: String?,
-    chaMod: Int,
-    activeBuffIds: Set<String>,
-    canRegainSpellSlot: Boolean,
-    onUse: () -> Unit,
-    onRestore: () -> Unit,
-    onToggleBuff: (buffId: String, consumesCharge: Boolean) -> Unit,
-    onHarnessDivinePower: () -> Unit
-) {
-    val isSacredWeaponActive = activeBuffIds.any { it.equals("sacred_weapon", ignoreCase = true) }
-    val isVowOfEnmityActive = activeBuffIds.any { it.equals("vow_of_enmity", ignoreCase = true) }
-
-    val hasDevotion = oath == null || oath.contains("Devotion", ignoreCase = true)
-    val hasVengeance = oath == null || oath.contains("Vengeance", ignoreCase = true)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Göttliche Macht (Channel Divinity)",
-                        fontWeight = FontWeight.Bold,
-                        color = SmiteBlue,
-                        fontSize = 14.sp
-                    )
-                    Text(
-                        text = "Regeneriert 1 Ladung bei Kurzer Rast!",
-                        fontSize = 11.sp,
-                        color = TextSecondary
-                    )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    (0 until maxUses).forEach { index ->
-                        val isUsed = index >= remaining
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(if (isUsed) SurfaceCardHighlight else SmiteBlue)
-                                .border(1.dp, if (isUsed) BorderDark else SmiteBlue, CircleShape)
-                                .clickable {
-                                    if (isUsed) onRestore() else onUse()
-                                }
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(color = BorderDark)
-
-            // Interactive powers
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Sacred Weapon (Devotion)
-                if (hasDevotion) {
-                    val sacredBonus = maxOf(1, chaMod)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (isSacredWeaponActive) PaladinGold.copy(alpha = 0.15f) else SurfaceCardHighlight)
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "🌟 Heilige Waffe (Sacred Weapon)",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSacredWeaponActive) PaladinGoldBright else TextPrimary
-                            )
-                            Text(
-                                text = "+$sacredBonus auf Waffen-Angriffe für 10 Min.",
-                                fontSize = 10.sp,
-                                color = if (isSacredWeaponActive) PaladinGold else TextSecondary
-                            )
-                        }
-
-                        if (isSacredWeaponActive) {
-                            Button(
-                                onClick = { onToggleBuff("sacred_weapon", false) },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = PaladinGold,
-                                    contentColor = DarkNavyBackground
-                                ),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                                modifier = Modifier.height(28.dp),
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Text("Aktiv ✕", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            }
-                        } else {
-                            Button(
-                                onClick = { onToggleBuff("sacred_weapon", true) },
-                                enabled = remaining > 0,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = SmiteBlue,
-                                    contentColor = androidx.compose.ui.graphics.Color.White
-                                ),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                                modifier = Modifier.height(28.dp),
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Text("Aktivieren", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                }
-
-                // Vow of Enmity (Vengeance)
-                if (hasVengeance) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (isVowOfEnmityActive) PaladinGold.copy(alpha = 0.15f) else SurfaceCardHighlight)
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "🎯 Gelübde der Feindschaft (Vow of Enmity)",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isVowOfEnmityActive) PaladinGoldBright else TextPrimary
-                            )
-                            Text(
-                                text = "Vorteil auf Angriffe gegen Ziel (1 Min.)",
-                                fontSize = 10.sp,
-                                color = if (isVowOfEnmityActive) PaladinGold else TextSecondary
-                            )
-                        }
-
-                        if (isVowOfEnmityActive) {
-                            Button(
-                                onClick = { onToggleBuff("vow_of_enmity", false) },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = PaladinGold,
-                                    contentColor = DarkNavyBackground
-                                ),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                                modifier = Modifier.height(28.dp),
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Text("Aktiv ✕", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            }
-                        } else {
-                            Button(
-                                onClick = { onToggleBuff("vow_of_enmity", true) },
-                                enabled = remaining > 0,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = SmiteBlue,
-                                    contentColor = androidx.compose.ui.graphics.Color.White
-                                ),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                                modifier = Modifier.height(28.dp),
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Text("Aktivieren", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                }
-
-                // Harness Divine Power (2024 optional/standard rule)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SurfaceCardHighlight)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "⚡ Göttliche Kraft bündeln",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Regeneriert 1 verbrauchten Zauberslot",
-                            fontSize = 10.sp,
-                            color = TextSecondary
-                        )
-                    }
-
-                    FilledTonalButton(
-                        onClick = onHarnessDivinePower,
-                        enabled = remaining > 0 && canRegainSpellSlot,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                        modifier = Modifier.height(28.dp),
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Text("+1 Slot", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SkillCheckRow(
-    skill: Skill,
-    modifier: Int,
-    isProficient: Boolean
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = if (isProficient) "⭐" else "○",
-                fontSize = 10.sp,
-                color = if (isProficient) PaladinGold else TextSecondary.copy(alpha = 0.5f)
-            )
-            Text(
-                text = "${skill.displayName} (${skill.ability.abbreviation})",
-                fontSize = 11.sp,
-                fontWeight = if (isProficient) FontWeight.Bold else FontWeight.Normal,
-                color = if (isProficient) TextPrimary else TextSecondary,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-            )
-        }
-
-        val modColor = when {
-            modifier > 0 -> if (isProficient) PaladinGold else ProficiencyGreen
-            modifier < 0 -> HealthRed
-            else -> TextSecondary
-        }
-
-        Text(
-            text = Ability.formatModifier(modifier),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = modColor,
-            modifier = Modifier.padding(start = 4.dp)
         )
     }
 }

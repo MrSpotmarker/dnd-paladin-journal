@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.paladin.app.data.CharacterRepository
 import com.paladin.app.ui.CharacterViewModel
@@ -22,9 +23,10 @@ import com.paladin.app.ui.theme.SurfaceCard
 enum class AppTab(val title: String, val icon: ImageVector) {
     COMBAT("Bogen", Icons.Default.Shield),
     WEAPONS("Waffen", Icons.Default.Gavel),
-    INVENTORY("Inventar", Icons.Default.Backpack),
     SPELLS("Zauber", Icons.Default.AutoStories),
-    SETTINGS("Stufe & Backup", Icons.Default.Settings)
+    INVENTORY("Inventar", Icons.Default.Backpack),
+    JOURNAL("Tagebuch", Icons.Default.Book),
+    SETTINGS("Stufe & DM", Icons.Default.Settings)
 }
 
 class MainActivity : ComponentActivity() {
@@ -53,7 +55,8 @@ class MainActivity : ComponentActivity() {
                                         selected = selectedTab == tab,
                                         onClick = { selectedTab = tab },
                                         icon = { Icon(tab.icon, contentDescription = tab.title) },
-                                        label = { Text(tab.title) },
+                                        label = { Text(tab.title, maxLines = 1, fontSize = 10.sp) },
+                                        alwaysShowLabel = false,
                                         colors = NavigationBarItemDefaults.colors(
                                             selectedIconColor = PaladinGold,
                                             selectedTextColor = PaladinGold,
@@ -73,11 +76,15 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding)
                             )
+                            AppTab.SPELLS -> SpellbookScreen(
+                                viewModel = viewModel,
+                                modifier = Modifier.padding(innerPadding)
+                            )
                             AppTab.INVENTORY -> InventoryScreen(
                                 viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding)
                             )
-                            AppTab.SPELLS -> SpellbookScreen(
+                            AppTab.JOURNAL -> JournalScreen(
                                 viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding)
                             )

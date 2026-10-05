@@ -43,4 +43,38 @@ data class AbilityScores(
         Ability.WISDOM -> copy(wisdom = newScore)
         Ability.CHARISMA -> copy(charisma = newScore)
     }
+
+    companion object {
+        const val POINT_BUY_BUDGET = 27
+
+        val STANDARD_ARRAY = mapOf(
+            Ability.STRENGTH to 15,
+            Ability.DEXTERITY to 10,
+            Ability.CONSTITUTION to 14,
+            Ability.INTELLIGENCE to 8,
+            Ability.WISDOM to 12,
+            Ability.CHARISMA to 13
+        )
+
+        fun calculatePointCost(score: Int): Int = when {
+            score <= 8 -> 0
+            score == 9 -> 1
+            score == 10 -> 2
+            score == 11 -> 3
+            score == 12 -> 4
+            score == 13 -> 5
+            score == 14 -> 7
+            score == 15 -> 9
+            score == 16 -> 11
+            score == 17 -> 13
+            score >= 18 -> 15 + (score - 18) * 2
+            else -> 0
+        }
+
+        fun calculateTotalPointsSpent(scores: Map<Ability, Int>): Int =
+            scores.values.sumOf { calculatePointCost(it) }
+
+        fun calculatePointsRemaining(scores: Map<Ability, Int>, budget: Int = POINT_BUY_BUDGET): Int =
+            budget - calculateTotalPointsSpent(scores)
+    }
 }

@@ -1,0 +1,273 @@
+package com.paladin.app.ui.components
+
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.paladin.app.ui.theme.*
+import kotlin.math.max
+
+@Composable
+fun ChannelDivinityCard(
+    remaining: Int,
+    maxUses: Int,
+    oath: String?,
+    chaMod: Int,
+    activeBuffIds: Set<String>,
+    canRegainSpellSlot: Boolean,
+    onUse: () -> Unit,
+    onRestore: () -> Unit,
+    onToggleBuff: (buffId: String, consumesCharge: Boolean) -> Unit,
+    onHarnessDivinePower: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isSacredWeaponActive = activeBuffIds.any { it.equals("sacred_weapon", ignoreCase = true) }
+    val isVowOfEnmityActive = activeBuffIds.any { it.equals("vow_of_enmity", ignoreCase = true) }
+
+    val hasDevotion = oath == null || oath.contains("Devotion", ignoreCase = true)
+    val hasVengeance = oath == null || oath.contains("Vengeance", ignoreCase = true)
+
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+        shape = RoundedCornerShape(16.dp),
+        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderDark))
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { isExpanded = !isExpanded }
+                ) {
+                    Text("⚡", fontSize = 16.sp)
+                    Column {
+                        Text(
+                            text = "Göttliche Macht (Channel Divinity)",
+                            fontWeight = FontWeight.Bold,
+                            color = SmiteBlue,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "Regeneriert 1 Ladung bei Kurzer Rast",
+                            fontSize = 11.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        (0 until maxUses).forEach { index ->
+                            val isUsed = index >= remaining
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isUsed) SurfaceCardHighlight else SmiteBlue)
+                                    .border(1.dp, if (isUsed) BorderDark else SmiteBlue, CircleShape)
+                                    .clickable {
+                                        if (isUsed) onRestore() else onUse()
+                                    }
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = { isExpanded = !isExpanded },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isExpanded) "Göttliche Macht einklappen" else "Göttliche Macht ausklappen",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // Interactive powers (Expandable)
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(modifier = Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HorizontalDivider(color = BorderDark)
+
+                    // Sacred Weapon (Devotion)
+                    if (hasDevotion) {
+                        val sacredBonus = max(1, chaMod)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSacredWeaponActive) PaladinGold.copy(alpha = 0.15f) else SurfaceCardHighlight)
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "🌟 Heilige Waffe (Sacred Weapon)",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSacredWeaponActive) PaladinGoldBright else TextPrimary
+                                )
+                                Text(
+                                    text = "+$sacredBonus auf Waffen-Angriffe für 10 Min.",
+                                    fontSize = 10.sp,
+                                    color = if (isSacredWeaponActive) PaladinGold else TextSecondary
+                                )
+                            }
+
+                            if (isSacredWeaponActive) {
+                                Button(
+                                    onClick = { onToggleBuff("sacred_weapon", false) },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = PaladinGold,
+                                        contentColor = DarkNavyBackground
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(28.dp),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text("Aktiv ✕", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            } else {
+                                Button(
+                                    onClick = { onToggleBuff("sacred_weapon", true) },
+                                    enabled = remaining > 0,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = SmiteBlue,
+                                        contentColor = Color.White
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(28.dp),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text("Aktivieren", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
+                    // Vow of Enmity (Vengeance)
+                    if (hasVengeance) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isVowOfEnmityActive) PaladinGold.copy(alpha = 0.15f) else SurfaceCardHighlight)
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "🎯 Gelübde der Feindschaft (Vow of Enmity)",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isVowOfEnmityActive) PaladinGoldBright else TextPrimary
+                                )
+                                Text(
+                                    text = "Vorteil auf Angriffe gegen Ziel (1 Min.)",
+                                    fontSize = 10.sp,
+                                    color = if (isVowOfEnmityActive) PaladinGold else TextSecondary
+                                )
+                            }
+
+                            if (isVowOfEnmityActive) {
+                                Button(
+                                    onClick = { onToggleBuff("vow_of_enmity", false) },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = PaladinGold,
+                                        contentColor = DarkNavyBackground
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(28.dp),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text("Aktiv ✕", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            } else {
+                                Button(
+                                    onClick = { onToggleBuff("vow_of_enmity", true) },
+                                    enabled = remaining > 0,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = SmiteBlue,
+                                        contentColor = Color.White
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(28.dp),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text("Aktivieren", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
+                    // Harness Divine Power (2024 optional/standard rule)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceCardHighlight)
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "⚡ Göttliche Kraft bündeln",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "Regeneriert 1 verbrauchten Zauberslot",
+                                fontSize = 10.sp,
+                                color = TextSecondary
+                            )
+                        }
+
+                        FilledTonalButton(
+                            onClick = onHarnessDivinePower,
+                            enabled = remaining > 0 && canRegainSpellSlot,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            modifier = Modifier.height(28.dp),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text("+1 Slot", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

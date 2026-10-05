@@ -41,12 +41,18 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         repository.updateCharacter(character.value.copy(tempHp = amount.coerceAtLeast(0)))
     }
 
+    fun addTempHp(amount: Int) {
+        val currentTemp = character.value.tempHp
+        repository.updateCharacter(character.value.copy(tempHp = (currentTemp + amount).coerceAtLeast(0)))
+    }
+
     fun useLayOnHands(amount: Int) {
         val currentUsed = character.value.layOnHandsUsed
         val maxPool = calculatedStats.value.maxLayOnHands
         val newUsed = (currentUsed + amount).coerceIn(0, maxPool)
-        heal(amount)
-        repository.updateCharacter(character.value.copy(layOnHandsUsed = newUsed))
+        val maxHp = calculatedStats.value.maxHp
+        val healed = RestService.applyHealing(character.value, amount, maxHp)
+        repository.updateCharacter(healed.copy(layOnHandsUsed = newUsed))
     }
 
     fun cureConditionLayOnHands() {
@@ -267,6 +273,39 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
 
     fun updateBaseAbilityScores(scores: AbilityScores) {
         repository.updateCharacter(character.value.copy(baseAbilityScores = scores))
+    }
+
+    fun getFormattedCurrentDate(): String {
+        return try {
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy", java.util.Locale.GERMAN)
+            java.time.LocalDate.now().format(formatter)
+        } catch (e: Exception) {
+            val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.GERMAN)
+            sdf.format(java.util.Date())
+        }
+    }
+
+    fun addJournalEntry(defaultDate: String = getFormattedCurrentDate()) {
+        val newEntry = JournalEntry(
+            dateText = defaultDate,
+            content = ""
+        )
+        val updated = listOf(newEntry) + character.value.journalEntries
+        repository.updateCharacter(character.value.copy(journalEntries = updated))
+    }
+
+    fun updateJournalEntry(id: String, dateText: String, content: String) {
+        val updated = character.value.journalEntries.map { entry ->
+            if (entry.id == id) {
+                entry.copy(dateText = dateText, content = content)
+            } else entry
+        }
+        repository.updateCharacter(character.value.copy(journalEntries = updated))
+    }
+
+    fun deleteJournalEntry(id: String) {
+        val updated = character.value.journalEntries.filter { it.id != id }
+        repository.updateCharacter(character.value.copy(journalEntries = updated))
     }
 
     fun completeCharacterCreation(

@@ -10,6 +10,8 @@ object RestService {
     /**
      * Führt eine Kurze Rast (Short Rest) durch:
      * - Heilt um den erwürfelten Betrag der ausgegebenen Trefferwürfel.
+     * - Übersteigt die Heilung das Maximum, wird der Überschuss als temporäre HP (tempHp) gutgeschrieben!
+     * - Vorhandene temporäre HP bleiben gemäß 5e-Regeln nach einer Kurzen Rast erhalten (verfallen erst bei Langer Rast).
      * - Zieht die ausgegebenen Trefferwürfel ab.
      * - 2024 Regel: Ein Paladin ab Stufe 3 regeneriert 1 verbrauchte Channel Divinity-Nutzung!
      */
@@ -19,7 +21,12 @@ object RestService {
         totalHpHealed: Int,
         maxHp: Int
     ): CharacterSheet {
-        val newHp = min(maxHp, character.currentHp + totalHpHealed)
+        val totalHealed = character.currentHp + totalHpHealed
+        val (newHp, newTempHp) = if (totalHealed > maxHp) {
+            maxHp to (character.tempHp + (totalHealed - maxHp))
+        } else {
+            totalHealed to character.tempHp
+        }
         val newHitDiceUsed = min(character.level, character.hitDiceUsed + hitDiceToSpend)
 
         // 2024 Paladin Rule: Regain 1 expended use of Channel Divinity on Short Rest
@@ -31,6 +38,7 @@ object RestService {
 
         return character.copy(
             currentHp = newHp,
+            tempHp = newTempHp,
             hitDiceUsed = newHitDiceUsed,
             channelDivinityUsed = newChannelDivinityUsed,
             activeBuffIds = emptySet()
@@ -91,11 +99,22 @@ object RestService {
     }
 
     /**
-     * Wendet Heilung an (kann nicht über Max HP heilen).
+     * Wendet Heilung an:
+     * - Heilt Current HP bis zum Max HP.
+     * - Übersteigt die Heilung das Max HP, wird der Überschuss als temporäre HP (tempHp) gutgeschrieben.
+     * - Schema: BasisHP + tempHP (z. B. 27+3).
      */
     fun applyHealing(character: CharacterSheet, healing: Int, maxHp: Int): CharacterSheet {
         if (healing <= 0) return character
-        val newHp = min(maxHp, character.currentHp + healing)
-        return character.copy(currentHp = newHp)
+        val total = character.currentHp + healing
+        return if (total > maxHp) {
+            val overflow = total - maxHp
+            character.copy(
+                currentHp = maxHp,
+                tempHp = character.tempHp + overflow
+            )
+        } else {
+            character.copy(currentHp = total)
+        }
     }
 }

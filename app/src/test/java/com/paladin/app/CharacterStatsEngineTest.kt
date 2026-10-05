@@ -209,7 +209,9 @@ class CharacterStatsEngineTest {
         )
         val stats = CharacterStatsEngine.calculate(characterWithDueling)
         assertEquals(1, stats.attacks.size)
-        assertTrue("Damage should include +2 Duellieren bonus", stats.attacks[0].damageString.contains("inkl. +2 Duellieren"))
+        assertEquals("1d8 + 5", stats.attacks[0].damageString)
+        assertTrue(stats.attacks[0].damageBreakdown.any { it.contains("Duellieren") })
+        assertTrue(stats.attacks[0].damageBreakdown.any { it.contains("Stärke") })
     }
 
     @Test
@@ -241,8 +243,9 @@ class CharacterStatsEngineTest {
         assertEquals(2, stats.initiative)
         // Defense gives +1 AC on top of 16 = 17
         assertEquals(17, stats.armorClass)
-        // Dueling gives +2 damage on Longsword
-        assertTrue(stats.attacks[0].damageString.contains("inkl. +2 Duellieren"))
+        // Dueling gives +2 damage on Longsword: 1d8 + 5 (clean overview) and breakdown
+        assertEquals("1d8 + 5", stats.attacks[0].damageString)
+        assertTrue(stats.attacks[0].damageBreakdown.any { it.contains("Duellieren") })
     }
 
     @Test
@@ -311,5 +314,21 @@ class CharacterStatsEngineTest {
         assertTrue("Divine Favor adds 1d4 radiant", attack.damageString.contains("+ 1d4 Radiant"))
         assertTrue("Bless is noted in buffs", attack.activeBuffNotes.any { it.contains("Segen") })
         assertEquals(2, stats.activeBuffs.size)
+    }
+
+    @Test
+    fun testJournalEntriesCreationAndSerialization() {
+        val entry1 = JournalEntry(dateText = "04.10.2026", content = "Erstes Treffen im Gasthaus.")
+        val entry2 = JournalEntry(dateText = "05.10.2026", content = "Aufbruch in die Gruft.")
+
+        val character = CharacterSheet(
+            name = "Sir Valerius",
+            journalEntries = listOf(entry2, entry1) // newest first
+        )
+
+        assertEquals(2, character.journalEntries.size)
+        assertEquals("05.10.2026", character.journalEntries[0].dateText)
+        assertEquals("Aufbruch in die Gruft.", character.journalEntries[0].content)
+        assertEquals("04.10.2026", character.journalEntries[1].dateText)
     }
 }

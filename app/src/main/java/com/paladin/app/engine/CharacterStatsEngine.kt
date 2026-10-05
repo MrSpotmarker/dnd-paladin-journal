@@ -308,9 +308,21 @@ object CharacterStatsEngine {
         val totalAttackBonus = pb + abilityMod + itemAttackBonus + sacredWeaponBonus
         val totalDamageMod = abilityMod + itemDamageBonus + duelingBonus
         val damageSign = if (totalDamageMod >= 0) "+ $totalDamageMod" else "- ${-totalDamageMod}"
-        val duelingSuffix = if (hasDueling) " (inkl. +2 Duellieren)" else ""
         
-        var damageStr = "${weapon.damageDice} $damageSign$duelingSuffix"
+        var damageStr = "${weapon.damageDice} $damageSign"
+
+        val statName = if (useDex) "Geschicklichkeit (DEX)" else "Stärke (STR)"
+        val statModStr = if (abilityMod >= 0) "+$abilityMod" else "$abilityMod"
+
+        val damageBreakdown = mutableListOf<String>()
+        damageBreakdown.add("$statModStr aus $statName")
+        if (hasDueling) {
+            damageBreakdown.add("+2 aus Duellieren (Kampfstil)")
+        }
+        if (itemDamageBonus != 0) {
+            val itemSign = if (itemDamageBonus > 0) "+$itemDamageBonus" else "$itemDamageBonus"
+            damageBreakdown.add("$itemSign aus magischer Waffe / Bonus")
+        }
 
         val buffNotes = mutableListOf<String>()
         if (isSacredWeapon) {
@@ -324,14 +336,29 @@ object CharacterStatsEngine {
         }
         if (activeBuffIds.any { it.equals("srd_divine_favor", ignoreCase = true) || it.equals("divine_favor", ignoreCase = true) }) {
             damageStr += " + 1d4 Radiant"
+            damageBreakdown.add("+1d4 Gleißend aus Göttliche Gunst")
             buffNotes.add("⚔️ Göttliche Gunst aktiv (+1d4 Gleißender Schaden)")
         }
         if (activeBuffIds.any { it.equals("srd_searing_smite", ignoreCase = true) || it.equals("searing_smite", ignoreCase = true) }) {
+            damageBreakdown.add("+1d6 Feuer aus Sengender Smite")
             buffNotes.add("🔥 Sengender Smite aktiv (+1d6 Feuerschaden & Brand)")
         }
         if (activeBuffIds.any { it.equals("srd_wrathful_smite", ignoreCase = true) || it.equals("wrathful_smite", ignoreCase = true) }) {
+            damageBreakdown.add("+1d6 Psychisch aus Zorniger Smite")
             buffNotes.add("👻 Zorniger Smite aktiv (+1d6 Psychisch & Verängstigt)")
         }
+
+        val attackParts = mutableListOf<String>()
+        attackParts.add("+$pb PB")
+        attackParts.add("$statModStr ${if (useDex) "DEX" else "STR"}")
+        if (itemAttackBonus != 0) {
+            val itemSign = if (itemAttackBonus > 0) "+$itemAttackBonus" else "$itemAttackBonus"
+            attackParts.add("$itemSign magisch")
+        }
+        if (sacredWeaponBonus > 0) {
+            attackParts.add("+$sacredWeaponBonus CHA (Heilige Waffe)")
+        }
+        val attackBreakdownStr = attackParts.joinToString(" + ")
 
         val isMastered = masteredWeapons.any { it.equals(weapon.name, ignoreCase = true) }
 
@@ -342,7 +369,9 @@ object CharacterStatsEngine {
             damageType = weapon.damageType,
             isMasteryActive = isMastered && weapon.mastery != null,
             masteryEffect = if (isMastered) weapon.mastery else null,
-            activeBuffNotes = buffNotes
+            activeBuffNotes = buffNotes,
+            damageBreakdown = damageBreakdown,
+            attackBreakdown = attackBreakdownStr
         )
     }
 
