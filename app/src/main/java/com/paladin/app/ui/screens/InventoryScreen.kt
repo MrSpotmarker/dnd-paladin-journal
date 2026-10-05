@@ -134,7 +134,7 @@ fun InventoryScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Header: Title and Actions
@@ -272,7 +272,8 @@ fun InventoryScreen(
 
         LazyColumn(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             if (filteredItems.isEmpty()) {
                 item {

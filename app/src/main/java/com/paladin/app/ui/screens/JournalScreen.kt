@@ -101,7 +101,7 @@ fun JournalScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Top Bar: Title & Add Section Button
@@ -197,7 +197,8 @@ fun JournalScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 itemsIndexed(entries, key = { _, entry -> entry.id }) { index, entry ->
                     val isBeingDragged = draggedIndex == index

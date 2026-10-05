@@ -3,23 +3,53 @@ package com.paladin.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.Backpack
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.paladin.app.data.CharacterRepository
 import com.paladin.app.ui.CharacterViewModel
 import com.paladin.app.ui.components.DetailInfoDialog
 import com.paladin.app.ui.components.EditItemDialog
-import com.paladin.app.ui.screens.*
-import com.paladin.app.ui.theme.*
+import com.paladin.app.ui.components.fadingBottomEdge
+import com.paladin.app.ui.screens.CharacterCreationScreen
+import com.paladin.app.ui.screens.CombatDashboardScreen
+import com.paladin.app.ui.screens.InventoryScreen
+import com.paladin.app.ui.screens.JournalScreen
+import com.paladin.app.ui.screens.LevelUpScreen
+import com.paladin.app.ui.screens.SpellbookScreen
+import com.paladin.app.ui.theme.ChaunteaGreenContainer
+import com.paladin.app.ui.theme.DarkNavyBackground
+import com.paladin.app.ui.theme.PaladinAppTheme
+import com.paladin.app.ui.theme.PaladinGold
+import com.paladin.app.ui.theme.TextSecondary
 
 enum class AppTab(val title: String, val icon: ImageVector) {
     SHEET("Sheet", Icons.Default.Shield),
@@ -74,59 +104,50 @@ class MainActivity : ComponentActivity() {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         bottomBar = {
-                            NavigationBar(
-                                containerColor = DarkNavyBackground,
-                                tonalElevation = 4.dp
+                            Surface(
+                                color = DarkNavyBackground,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                AppTab.entries.forEach { tab ->
-                                    NavigationBarItem(
-                                        selected = selectedTab == tab,
-                                        onClick = { selectedTab = tab },
-                                        icon = {
-                                            Icon(tab.icon, contentDescription = tab.title)
-                                        },
-                                        label = {
-                                            Text(
-                                                tab.title,
-                                                maxLines = 1,
-                                                fontSize = 10.sp,
-                                                fontWeight = if (selectedTab == tab) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .windowInsetsPadding(NavigationBarDefaults.windowInsets)
+                                        .height(52.dp)
+                                        .selectableGroup(),
+                                    horizontalArrangement = Arrangement.SpaceAround,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AppTab.entries.forEach { tab ->
+                                        NavigationBarItem(
+                                            selected = selectedTab == tab,
+                                            onClick = { selectedTab = tab },
+                                            icon = {
+                                                Icon(tab.icon, contentDescription = tab.title)
+                                            },
+                                            colors = NavigationBarItemDefaults.colors(
+                                                selectedIconColor = PaladinGold,
+                                                unselectedIconColor = TextSecondary,
+                                                indicatorColor = ChaunteaGreenContainer
                                             )
-                                        },
-                                        alwaysShowLabel = false,
-                                        colors = NavigationBarItemDefaults.colors(
-                                            selectedIconColor = PaladinGold,
-                                            selectedTextColor = PaladinGold,
-                                            unselectedIconColor = TextSecondary,
-                                            unselectedTextColor = TextSecondary,
-                                            indicatorColor = ChaunteaGreenContainer
                                         )
-                                    )
+                                    }
                                 }
                             }
                         }
                     ) { innerPadding ->
-                        when (selectedTab) {
-                            AppTab.SHEET -> CombatDashboardScreen(
-                                viewModel = viewModel,
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                            AppTab.SPELLS -> SpellbookScreen(
-                                viewModel = viewModel,
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                            AppTab.INVENTORY -> InventoryScreen(
-                                viewModel = viewModel,
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                            AppTab.JOURNAL -> JournalScreen(
-                                viewModel = viewModel,
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                            AppTab.SETTINGS -> LevelUpScreen(
-                                viewModel = viewModel,
-                                modifier = Modifier.padding(innerPadding)
-                            )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .fadingBottomEdge(fadeHeight = 16.dp)
+                        ) {
+                            when (selectedTab) {
+                                AppTab.SHEET -> CombatDashboardScreen(viewModel = viewModel)
+                                AppTab.SPELLS -> SpellbookScreen(viewModel = viewModel)
+                                AppTab.INVENTORY -> InventoryScreen(viewModel = viewModel)
+                                AppTab.JOURNAL -> JournalScreen(viewModel = viewModel)
+                                AppTab.SETTINGS -> LevelUpScreen(viewModel = viewModel)
+                            }
                         }
                     }
                 }

@@ -101,7 +101,7 @@ fun SpellbookScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
@@ -214,7 +214,8 @@ fun SpellbookScreen(
         // Spells List
         LazyColumn(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             items(filteredSpells, key = { it.id }) { spell ->
                 val isPrepared = spell.id in character.preparedSpellIds
