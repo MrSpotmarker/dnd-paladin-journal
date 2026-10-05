@@ -24,6 +24,8 @@ import com.paladin.app.ui.theme.*
 @Composable
 fun EquippedWeaponsCard(
     attacks: List<AttackInfo>,
+    spellSlots: List<com.paladin.app.model.SpellSlotState> = emptyList(),
+    onUseSlot: (Int) -> Unit = {},
     onShowDetail: (DetailItem) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -76,6 +78,8 @@ fun EquippedWeaponsCard(
                     attacks.forEach { attack ->
                         EquippedWeaponRow(
                             attack = attack,
+                            spellSlots = spellSlots,
+                            onUseSlot = onUseSlot,
                             onShowDetail = { onShowDetail(DetailItem.ItemInfo(attack.item)) }
                         )
                     }
@@ -89,9 +93,14 @@ fun EquippedWeaponsCard(
 @Composable
 fun EquippedWeaponRow(
     attack: AttackInfo,
+    spellSlots: List<com.paladin.app.model.SpellSlotState> = emptyList(),
+    onUseSlot: (Int) -> Unit = {},
     onShowDetail: () -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    var showSmitePanel by remember { mutableStateOf(false) }
+    var selectedSmiteSlotLevel by remember { mutableIntStateOf(1) }
+    var smiteExecutedMessage by remember { mutableStateOf<String?>(null) }
 
     Card(
         modifier = Modifier
@@ -282,6 +291,113 @@ fun EquippedWeaponRow(
                         fontSize = 10.sp,
                         color = TextSecondary.copy(alpha = 0.8f)
                     )
+
+                    // ── ⚡ Schnell-Smite Rechner (D&D 2024 Regel) ──
+                    val availableSlots = spellSlots.filter { it.remainingSlots > 0 }
+                    Surface(
+                        color = SmiteBlue.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SmiteBlue.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("⚡", fontSize = 13.sp)
+                                    Text("Paladin's Smite", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PaladinGoldBright)
+                                }
+                                TextButton(
+                                    onClick = { showSmitePanel = !showSmitePanel },
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(24.dp)
+                                ) {
+                                    Text(if (showSmitePanel) "Schließen ▲" else "Smite berechnen ▼", fontSize = 11.sp, color = PaladinGold)
+                                }
+                            }
+
+                            if (showSmitePanel) {
+                                if (availableSlots.isEmpty()) {
+                                    Text(
+                                        text = "Keine Zauberplätze mehr verfügbar!",
+                                        fontSize = 11.sp,
+                                        color = HealthRed
+                                    )
+                                } else {
+                                    val currentSlot = availableSlots.find { it.level == selectedSmiteSlotLevel } ?: availableSlots.first()
+                                    val smiteDiceCount = 1 + currentSlot.level // 2024: Grad 1 = 2d8, Grad 2 = 3d8, etc.
+                                    val totalDamageFormula = "${attack.damageString} + ${smiteDiceCount}d8 Radiant"
+
+                                    Text(
+                                        text = "Wähle Zauberplatz-Grad:",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary
+                                    )
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        availableSlots.forEach { slot ->
+                                            FilterChip(
+                                                selected = slot.level == currentSlot.level,
+                                                onClick = { selectedSmiteSlotLevel = slot.level },
+                                                label = { Text("Grad ${slot.level} (${slot.remainingSlots}x)", fontSize = 11.sp) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = PaladinGold,
+                                                    selectedLabelColor = DarkNavyBackground
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    Surface(
+                                        color = SurfaceCard,
+                                        shape = RoundedCornerShape(6.dp),
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                                    ) {
+                                        Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(
+                                                text = "🔥 Gesamtschaden: $totalDamageFormula",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = PaladinGoldBright
+                                            )
+                                            Text(
+                                                text = "Bonus-Aktion direkt nach Treffer • Grad ${currentSlot.level} Slot verbraucht",
+                                                fontSize = 10.sp,
+                                                color = TextSecondary
+                                            )
+                                        }
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            onUseSlot(currentSlot.level)
+                                            smiteExecutedMessage = "Grad ${currentSlot.level} Smite gezündet (+${smiteDiceCount}d8 Radiant)!"
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = PaladinGold,
+                                            contentColor = DarkNavyBackground
+                                        ),
+                                        modifier = Modifier.fillMaxWidth().height(32.dp),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text("⚡ Slot verbrauchen & Smite zünden", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+
+                                    if (smiteExecutedMessage != null) {
+                                        Text(
+                                            text = smiteExecutedMessage!!,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = LayOnHandsGreen
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     Row(
                         modifier = Modifier

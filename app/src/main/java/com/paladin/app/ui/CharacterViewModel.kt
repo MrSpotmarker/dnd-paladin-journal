@@ -85,12 +85,29 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         repository.updateCharacter(healed.copy(layOnHandsUsed = newUsed))
     }
 
-    fun cureConditionLayOnHands() {
+    fun cureConditionLayOnHands(condition: Condition = Condition.POISONED) {
         val remaining = calculatedStats.value.remainingLayOnHands
         if (remaining >= 5) {
             val currentUsed = character.value.layOnHandsUsed
-            repository.updateCharacter(character.value.copy(layOnHandsUsed = currentUsed + 5))
+            val updatedConditions = character.value.activeConditions - condition
+            repository.updateCharacter(
+                character.value.copy(
+                    layOnHandsUsed = currentUsed + 5,
+                    activeConditions = updatedConditions
+                )
+            )
         }
+    }
+
+    fun toggleCondition(condition: Condition) {
+        val current = character.value.activeConditions
+        val updated = if (condition in current) current - condition else current + condition
+        repository.updateCharacter(character.value.copy(activeConditions = updated))
+    }
+
+    fun removeCondition(condition: Condition) {
+        val current = character.value.activeConditions
+        repository.updateCharacter(character.value.copy(activeConditions = current - condition))
     }
 
     fun useSpellSlot(level: Int) {

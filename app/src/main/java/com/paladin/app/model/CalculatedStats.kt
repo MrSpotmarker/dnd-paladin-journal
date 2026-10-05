@@ -39,6 +39,8 @@ data class CalculatedStats(
     val savingThrowProficiencies: Set<Ability>,
     val hasAuraOfProtection: Boolean,
     val auraOfProtectionBonus: Int,
+    val auraRangeFt: Int = 10,
+    val hasAuraOfCourage: Boolean = false,
     val skillModifiers: Map<Skill, Int>,
     val spellSaveDc: Int,
     val spellAttackBonus: Int,
@@ -50,5 +52,6 @@ data class CalculatedStats(
     val initiative: Int,
     val speedFt: Int = 30,
     val hasDmOverrides: Boolean,
-    val activeBuffs: List<ActiveBuffInfo> = emptyList()
+    val activeBuffs: List<ActiveBuffInfo> = emptyList(),
+    val activeConditions: Set<Condition> = emptySet()
 )

@@ -141,6 +141,15 @@ fun CombatDashboardScreen(
             )
         }
 
+        // Status-Zustände (Conditions Tracker - D&D 2024)
+        ConditionsSection(
+            activeConditions = character.activeConditions,
+            onToggleCondition = { viewModel.toggleCondition(it) },
+            onRemoveCondition = { viewModel.removeCondition(it) },
+            onCurePoisonLayOnHands = { viewModel.cureConditionLayOnHands(com.paladin.app.model.Condition.POISONED) },
+            remainingLayOnHands = stats.remainingLayOnHands
+        )
+
         // Health Card
         HealthCard(
             currentHp = stats.currentHp,
@@ -151,9 +160,11 @@ fun CombatDashboardScreen(
             onSetTempHp = { viewModel.setTempHp(it) }
         )
 
-        // Equipped Weapons & Attacks Card
+        // Equipped Weapons & Attacks Card mit Smite-Rechner
         EquippedWeaponsCard(
             attacks = stats.attacks,
+            spellSlots = stats.spellSlots,
+            onUseSlot = { viewModel.useSpellSlot(it) },
             onShowDetail = { viewModel.showDetail(it) }
         )
 
@@ -276,13 +287,41 @@ fun CombatDashboardScreen(
                 shape = RoundedCornerShape(8.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, PaladinGold.copy(alpha = 0.5f))
             ) {
-                Text(
-                    text = "✨ Aura of Protection aktiv (+${stats.auraOfProtectionBonus} auf ALLE Rettungswürfe)",
-                    color = PaladinGoldBright,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(8.dp)
-                )
+                Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "✨ Schutz-Aura (Aura of Protection) aktiv • Reichweite: ${stats.auraRangeFt} ft.",
+                        color = PaladinGoldBright,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "+${stats.auraOfProtectionBonus} auf ALLE Rettungswürfe (für dich & Verbündete in ${stats.auraRangeFt} ft.)",
+                        color = TextPrimary,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
+
+        if (stats.hasAuraOfCourage) {
+            Surface(
+                color = ChaunteaGreen.copy(alpha = 0.20f),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, ChaunteaGreenBright.copy(alpha = 0.6f))
+            ) {
+                Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "🦁 Aura des Mutes (Aura of Courage) aktiv • ${stats.auraRangeFt} ft.",
+                        color = ChaunteaGreenBright,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Du und Verbündete in ${stats.auraRangeFt} ft. können nicht verängstigt (Frightened) werden!",
+                        color = TextPrimary,
+                        fontSize = 11.sp
+                    )
+                }
             }
         }
 

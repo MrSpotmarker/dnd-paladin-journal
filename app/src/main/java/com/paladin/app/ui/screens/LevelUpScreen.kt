@@ -98,7 +98,7 @@ fun LevelUpScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "🌟 Level-Up Assistent (Paladin 2024)",
+                    text = "🌟 Level-Up Assistent",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = PaladinGold

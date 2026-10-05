@@ -132,6 +132,9 @@ object CharacterStatsEngine {
             activeBuffList.add(ActiveBuffInfo("divine_sense", "Göttliches Gespür (Divine Sense)", "👁️", "Spürt Himmlische, Unholde & Untote (60ft)", isConcentration = false))
         }
 
+        val auraRangeFt = if (level >= 18) 30 else 10
+        val hasAuraOfCourage = level >= 10
+
         return CalculatedStats(
             proficiencyBonus = pb,
             effectiveAbilities = effectiveAbilities,
@@ -151,6 +154,8 @@ object CharacterStatsEngine {
             savingThrowProficiencies = savingThrowProficiencies,
             hasAuraOfProtection = hasAura,
             auraOfProtectionBonus = auraBonus,
+            auraRangeFt = auraRangeFt,
+            hasAuraOfCourage = hasAuraOfCourage,
             skillModifiers = skillModifiers,
             spellSaveDc = spellSaveDc,
             spellAttackBonus = spellAttackBonus,
@@ -162,7 +167,8 @@ object CharacterStatsEngine {
             initiative = initiative,
             speedFt = character.species.baseSpeedFt,
             hasDmOverrides = character.dmOverrides.isActive,
-            activeBuffs = activeBuffList
+            activeBuffs = activeBuffList,
+            activeConditions = character.activeConditions
         )
     }
 

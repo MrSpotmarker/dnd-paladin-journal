@@ -88,7 +88,8 @@ data class CharacterSheet(
     val notes: String = "",
     val journalEntries: List<JournalEntry> = emptyList(),
     val customProfileImagePath: String? = null,
-    val customFullImagePath: String? = null
+    val customFullImagePath: String? = null,
+    val activeConditions: Set<Condition> = emptySet()
 ) {
     val totalGoldEquivalent: Double
         get() = goldPieces + (silverPieces / 10.0) + (copperPieces / 100.0)

@@ -71,7 +71,7 @@ fun SpellbookScreen(
         ) {
             Column {
                 Text(
-                    text = "Zauberbuch (Paladin 2024)",
+                    text = "Zauberbuch",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = PaladinGold
