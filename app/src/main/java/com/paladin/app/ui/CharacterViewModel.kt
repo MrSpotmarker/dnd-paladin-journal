@@ -368,27 +368,65 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         }
     }
 
-    fun addJournalEntry(defaultDate: String = getFormattedCurrentDate()) {
+    fun addJournalEntry(defaultTitle: String = getFormattedCurrentDate()) {
         val newEntry = JournalEntry(
-            dateText = defaultDate,
+            title = defaultTitle,
+            dateText = defaultTitle,
             content = ""
         )
         val updated = listOf(newEntry) + character.value.journalEntries
         repository.updateCharacter(character.value.copy(journalEntries = updated))
     }
 
-    fun updateJournalEntry(id: String, dateText: String, content: String) {
+    fun updateJournalEntry(id: String, title: String, content: String) {
         val updated = character.value.journalEntries.map { entry ->
             if (entry.id == id) {
-                entry.copy(dateText = dateText, content = content)
+                entry.copy(title = title, dateText = title, content = content)
             } else entry
         }
         repository.updateCharacter(character.value.copy(journalEntries = updated))
     }
 
     fun deleteJournalEntry(id: String) {
+        val target = character.value.journalEntries.find { it.id == id }
+        target?.imagePaths?.forEach { path ->
+            com.paladin.app.data.JournalImageManager.deleteImageLocally(path)
+        }
         val updated = character.value.journalEntries.filter { it.id != id }
         repository.updateCharacter(character.value.copy(journalEntries = updated))
+    }
+
+    fun addPhotoToJournalEntry(entryId: String, sourceUri: android.net.Uri, context: android.content.Context) {
+        val savedPath = com.paladin.app.data.JournalImageManager.saveImageLocally(context, sourceUri) ?: return
+        val updated = character.value.journalEntries.map { entry ->
+            if (entry.id == entryId) {
+                entry.copy(imagePaths = entry.imagePaths + savedPath)
+            } else entry
+        }
+        repository.updateCharacter(character.value.copy(journalEntries = updated))
+    }
+
+    fun removePhotoFromJournalEntry(entryId: String, imagePath: String) {
+        com.paladin.app.data.JournalImageManager.deleteImageLocally(imagePath)
+        val updated = character.value.journalEntries.map { entry ->
+            if (entry.id == entryId) {
+                entry.copy(imagePaths = entry.imagePaths.filter { it != imagePath })
+            } else entry
+        }
+        repository.updateCharacter(character.value.copy(journalEntries = updated))
+    }
+
+    fun moveJournalEntry(fromIndex: Int, toIndex: Int) {
+        val list = character.value.journalEntries.toMutableList()
+        if (fromIndex in list.indices && toIndex in list.indices && fromIndex != toIndex) {
+            val item = list.removeAt(fromIndex)
+            list.add(toIndex, item)
+            repository.updateCharacter(character.value.copy(journalEntries = list))
+        }
+    }
+
+    fun reorderJournalEntries(newEntries: List<JournalEntry>) {
+        repository.updateCharacter(character.value.copy(journalEntries = newEntries))
     }
 
     fun completeCharacterCreation(
@@ -429,6 +467,30 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
 
     fun importBackupJson(jsonStr: String): Boolean {
         return repository.importCharacterFromJson(jsonStr).isSuccess
+    }
+
+    fun exportArchiveBackup(context: android.content.Context, targetUri: android.net.Uri): Result<Int> {
+        return try {
+            context.contentResolver.openOutputStream(targetUri)?.use { outputStream ->
+                repository.exportArchiveBackup(outputStream)
+            } ?: Result.failure(Exception("Konnte Datei-Stream nicht öffnen"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun createShareableArchive(): Result<java.io.File> {
+        return repository.createShareableArchive()
+    }
+
+    fun importArchiveBackup(context: android.content.Context, sourceUri: android.net.Uri): Result<CharacterSheet> {
+        return try {
+            context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                repository.importArchiveBackup(inputStream)
+            } ?: Result.failure(Exception("Konnte Datei-Stream nicht öffnen"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     // -------------------------------------------------------------

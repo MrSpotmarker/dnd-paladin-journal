@@ -95,6 +95,29 @@ class CharacterRepository(private val context: Context) {
         }
     }
 
+    /**
+     * Exportiert den Charakter inklusive komprimierter Bilder in ein .paladin ZIP-Archiv.
+     */
+    fun exportArchiveBackup(outputStream: java.io.OutputStream): Result<Int> {
+        return CharacterBackupManager.exportBackupArchive(context, outputStream, _character.value)
+    }
+
+    /**
+     * Erstellt eine temporäre teilbare .paladin Datei für Android Share Sheet.
+     */
+    fun createShareableArchive(): Result<java.io.File> {
+        return CharacterBackupManager.createShareableBackupFile(context, _character.value)
+    }
+
+    /**
+     * Importiert ein .paladin / .zip Archiv, entpackt Bilder und stellt den Charakter wieder her.
+     */
+    fun importArchiveBackup(inputStream: java.io.InputStream): Result<CharacterSheet> {
+        return CharacterBackupManager.importBackupArchive(context, inputStream).onSuccess { restored ->
+            updateCharacter(restored)
+        }
+    }
+
     fun startNewCharacterCreation() {
         val blank = createDefaultCharacter().copy(hasCompletedCreation = false)
         updateCharacter(blank)

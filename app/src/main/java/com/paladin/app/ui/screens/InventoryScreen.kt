@@ -1,5 +1,7 @@
 package com.paladin.app.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,12 +18,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -290,13 +295,13 @@ fun InventoryItemRow(
     onDelete: () -> Unit,
     onShowDetail: () -> Unit = {}
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val arrowRotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "arrowRotation")
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = onShowDetail,
-                onLongClick = onShowDetail
-            ),
+            .clickable { isExpanded = !isExpanded },
         colors = CardDefaults.cardColors(
             containerColor = if (item.isEquipped) SurfaceCardHighlight else SurfaceCard
         ),
@@ -304,152 +309,229 @@ fun InventoryItemRow(
         border = if (item.isEquipped) {
             androidx.compose.foundation.BorderStroke(1.dp, PaladinGold.copy(alpha = 0.6f))
         } else if (item.type.isConsumableOrPotion) {
-            androidx.compose.foundation.BorderStroke(1.dp, ChaunteaGreen.copy(alpha = 0.35f))
+            androidx.compose.foundation.BorderStroke(1.dp, ChaunteaGreen.copy(alpha = 0.45f))
         } else {
             androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f))
         }
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            // ── Zeile 1: Titel über die ganze Breite + Menge & Status-Badges + Expand-Pfeil ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Name & Badges
+                Row(
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     Text(
                         text = item.name,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (item.isEquipped) PaladinGold else TextPrimary
+                        color = if (item.isEquipped) PaladinGold else TextPrimary,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
-                    if (item.quantity > 1) {
-                        Surface(
-                            color = if (item.type.isConsumableOrPotion) ChaunteaGreenContainer else PaladinGold.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(4.dp),
-                            modifier = Modifier.padding(start = 6.dp)
-                        ) {
-                            Text(
-                                text = "${item.quantity}x",
-                                color = if (item.type.isConsumableOrPotion) ChaunteaGreenBright else PaladinGold,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                            )
-                        }
+
+                    // Menge-Badge (immer sichtbar!)
+                    Surface(
+                        color = if (item.type.isConsumableOrPotion) ChaunteaGreenContainer else PaladinGold.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = "${item.quantity}x",
+                            color = if (item.type.isConsumableOrPotion) ChaunteaGreenBright else PaladinGold,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
                     }
+
                     if (item.isEquipped) {
                         Surface(
                             color = PaladinGold.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(4.dp),
-                            modifier = Modifier.padding(start = 6.dp)
+                            shape = RoundedCornerShape(4.dp)
                         ) {
                             Text(
                                 text = "Angelegt",
                                 color = PaladinGold,
                                 fontSize = 10.sp,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    if (item.isAttuned) {
+                        Surface(
+                            color = SpellSlotPurple.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = "Eingestimmt",
+                                color = SpellSlotPurple,
+                                fontSize = 10.sp,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                             )
                         }
                     }
                 }
 
-                val totalWeight = item.weightLbs * item.quantity
-                val weightStr = if (item.quantity > 1) {
-                    "${"%.1f".format(totalWeight)} lbs (${item.weightLbs} lbs/Stk)"
-                } else {
-                    "${item.weightLbs} lbs"
-                }
-
-                Text(
-                    text = "${item.type.name} • $weightStr${if (item.description.isNotBlank()) " • ${item.description}" else ""}",
-                    fontSize = 11.sp,
-                    color = TextSecondary,
-                    maxLines = 2
+                // Expand/Collapse Icon
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isExpanded) "Zuklappen" else "Aufklappen",
+                    tint = TextSecondary,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .rotate(arrowRotation)
                 )
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Quantity Counter [-] [X] [+]
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+            // ── Aufklappbarer Bereich (Typ, Gewicht, Beschreibung & Aktionen) ──
+            AnimatedVisibility(visible = isExpanded) {
+                Column(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SurfaceCardHighlight.copy(alpha = 0.8f))
-                        .padding(horizontal = 2.dp, vertical = 2.dp)
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    IconButton(
-                        onClick = { if (item.quantity > 1) onUpdateQuantity(item.quantity - 1) },
-                        enabled = item.quantity > 1,
-                        modifier = Modifier.size(26.dp)
-                    ) {
-                        Text(
-                            text = "-",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (item.quantity > 1) TextPrimary else TextSecondary.copy(alpha = 0.3f)
-                        )
+                    HorizontalDivider(color = BorderDark.copy(alpha = 0.5f))
+
+                    // Typ & Gewicht
+                    val totalWeight = item.weightLbs * item.quantity
+                    val weightStr = if (item.quantity > 1) {
+                        "${"%.1f".format(totalWeight)} lbs (${item.weightLbs} lbs/Stk)"
+                    } else {
+                        "${item.weightLbs} lbs"
                     }
 
                     Text(
-                        text = "${item.quantity}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (item.quantity > 1) PaladinGold else TextPrimary,
-                        modifier = Modifier.padding(horizontal = 3.dp)
+                        text = "${item.type.name} • $weightStr",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
                     )
 
-                    IconButton(
-                        onClick = { onUpdateQuantity(item.quantity + 1) },
-                        modifier = Modifier.size(26.dp)
-                    ) {
+                    // Beschreibung / Notizen falls vorhanden
+                    if (item.description.isNotBlank()) {
                         Text(
-                            text = "+",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = PaladinGold
+                            text = item.description,
+                            fontSize = 12.sp,
+                            color = TextPrimary.copy(alpha = 0.9f),
+                            lineHeight = 16.sp
                         )
                     }
-                }
 
-                // Equip / Unequip button for equippable items
-                if (item.type in setOf(ItemType.WEAPON, ItemType.ARMOR, ItemType.SHIELD, ItemType.MAGIC_ITEM)) {
-                    OutlinedButton(
-                        onClick = onToggleEquip,
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
-                        modifier = Modifier.height(28.dp),
-                        shape = RoundedCornerShape(6.dp)
+                    // Aktionen-Leiste: [- 1 +], Anlegen, Details, Edit, Löschen
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(if (item.isEquipped) "Ablegen" else "Anlegen", fontSize = 11.sp)
+                        // Mengen-Regler [- X +]
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(SurfaceCardHighlight.copy(alpha = 0.9f))
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            IconButton(
+                                onClick = { if (item.quantity > 1) onUpdateQuantity(item.quantity - 1) },
+                                enabled = item.quantity > 1,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Text(
+                                    text = "-",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (item.quantity > 1) TextPrimary else TextSecondary.copy(alpha = 0.3f)
+                                )
+                            }
+
+                            Text(
+                                text = "${item.quantity}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (item.quantity > 1) PaladinGold else TextPrimary,
+                                modifier = Modifier.padding(horizontal = 6.dp)
+                            )
+
+                            IconButton(
+                                onClick = { onUpdateQuantity(item.quantity + 1) },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Text(
+                                    text = "+",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PaladinGold
+                                )
+                            }
+                        }
+
+                        // Rechte Aktionsbuttons
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Equip / Unequip button
+                            if (item.type in setOf(ItemType.WEAPON, ItemType.ARMOR, ItemType.SHIELD, ItemType.MAGIC_ITEM)) {
+                                OutlinedButton(
+                                    onClick = onToggleEquip,
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(30.dp),
+                                    shape = RoundedCornerShape(6.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = if (item.isEquipped) PaladinGold else TextPrimary
+                                    )
+                                ) {
+                                    Text(if (item.isEquipped) "Ablegen" else "Anlegen", fontSize = 11.sp)
+                                }
+                            }
+
+                            // Detail Info Button
+                            IconButton(
+                                onClick = onShowDetail,
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Info,
+                                    contentDescription = "Details",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+
+                            // Edit Button
+                            IconButton(
+                                onClick = onEdit,
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = "Anpassen",
+                                    tint = PaladinGold.copy(alpha = 0.85f),
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+
+                            // Delete Button
+                            IconButton(
+                                onClick = onDelete,
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Löschen",
+                                    tint = HealthRed.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+                        }
                     }
-                }
-
-                IconButton(
-                    onClick = onEdit,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Anpassen",
-                        tint = PaladinGold.copy(alpha = 0.85f),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Löschen",
-                        tint = HealthRed.copy(alpha = 0.7f),
-                        modifier = Modifier.size(16.dp)
-                    )
                 }
             }
         }

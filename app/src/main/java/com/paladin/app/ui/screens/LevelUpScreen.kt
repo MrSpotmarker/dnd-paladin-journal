@@ -529,11 +529,8 @@ fun LevelUpScreen(
         // ── Image Customization Card ───────────────────────────────────────
         CharacterImagePickerCard(viewModel = viewModel)
 
-        // Backup Export / Import Card
-        CharacterBackupCard(
-            onExportJson = { viewModel.exportBackupJson() },
-            onImportJson = { viewModel.importBackupJson(it) }
-        )
+        // Backup Export / Import Card (.paladin Archiv & JSON)
+        CharacterBackupCard(viewModel = viewModel)
     }
 }
 

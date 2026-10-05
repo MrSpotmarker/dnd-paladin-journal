@@ -94,6 +94,23 @@ fun CharacterFullImageDialog(
     customFullImagePath: String?,
     onDismiss: () -> Unit
 ) {
+    FullscreenImageDialog(
+        imageModel = if (customFullImagePath != null) Uri.parse(customFullImagePath) else R.drawable.lein,
+        contentDescription = "Charakterbild",
+        onDismiss = onDismiss
+    )
+}
+
+/**
+ * Universal full-screen animated dialog with bounce / spring animation.
+ * Accepts any image model supported by Coil (Uri, File, String path, or Int resId).
+ */
+@Composable
+fun FullscreenImageDialog(
+    imageModel: Any?,
+    contentDescription: String = "Vollansicht",
+    onDismiss: () -> Unit
+) {
     var visible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { visible = true }
@@ -125,20 +142,20 @@ fun CharacterFullImageDialog(
                         .fillMaxWidth(0.92f)
                         .clip(RoundedCornerShape(16.dp))
                 ) {
-                    if (customFullImagePath != null) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(Uri.parse(customFullImagePath))
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = "Charakterbild",
+                    if (imageModel is Int) {
+                        Image(
+                            painter = painterResource(id = imageModel),
+                            contentDescription = contentDescription,
                             contentScale = ContentScale.FillWidth,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.lein),
-                            contentDescription = "Charakterbild",
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(imageModel)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = contentDescription,
                             contentScale = ContentScale.FillWidth,
                             modifier = Modifier.fillMaxWidth()
                         )

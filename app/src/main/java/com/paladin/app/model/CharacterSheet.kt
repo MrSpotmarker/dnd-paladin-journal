@@ -45,10 +45,15 @@ data class DeathSavesState(
 @Serializable
 data class JournalEntry(
     val id: String = UUID.randomUUID().toString(),
+    val title: String = "",
     val dateText: String = "",
     val content: String = "",
+    val imagePaths: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis()
-)
+) {
+    val displayTitle: String
+        get() = title.ifBlank { dateText.ifBlank { "Unbenannter Eintrag" } }
+}
 
 @Serializable
 data class CharacterSheet(
