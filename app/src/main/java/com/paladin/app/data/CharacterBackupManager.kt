@@ -1,16 +1,15 @@
 package com.paladin.app.data
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.media.ExifInterface
 import android.net.Uri
 import com.paladin.app.model.CharacterSheet
-import com.paladin.app.model.JournalEntry
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import java.io.*
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream

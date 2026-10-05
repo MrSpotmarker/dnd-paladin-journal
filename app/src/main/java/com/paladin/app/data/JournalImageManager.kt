@@ -3,7 +3,6 @@ package com.paladin.app.data
 import android.content.Context
 import android.net.Uri
 import java.io.File
-import java.io.FileOutputStream
 import java.util.UUID
 
 object JournalImageManager {

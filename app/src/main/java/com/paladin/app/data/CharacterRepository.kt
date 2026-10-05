@@ -1,12 +1,18 @@
 package com.paladin.app.data
 
 import android.content.Context
-import com.paladin.app.model.*
+import com.paladin.app.model.AbilityScores
+import com.paladin.app.model.ArmorType
+import com.paladin.app.model.CharacterSheet
+import com.paladin.app.model.Item
+import com.paladin.app.model.ItemType
+import com.paladin.app.model.Skill
+import com.paladin.app.model.Spell
+import com.paladin.app.model.WeaponMastery
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -105,7 +111,7 @@ class CharacterRepository(private val context: Context) {
     /**
      * Erstellt eine temporäre teilbare .paladin Datei für Android Share Sheet.
      */
-    fun createShareableArchive(): Result<java.io.File> {
+    fun createShareableArchive(): Result<File> {
         return CharacterBackupManager.createShareableBackupFile(context, _character.value)
     }
 
