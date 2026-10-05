@@ -137,6 +137,15 @@ object CharacterStatsEngine {
         if (character.activeBuffIds.any { it.equals("srd_wrathful_smite", ignoreCase = true) || it.equals("wrathful_smite", ignoreCase = true) }) {
             activeBuffList.add(ActiveBuffInfo("srd_wrathful_smite", "Wrathful Smite", "👻", "+1d6 Psychisch & Furcht", isConcentration = true))
         }
+        if (character.activeBuffIds.any { it.equals("srd_thunderous_smite", ignoreCase = true) || it.equals("thunderous_smite", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_thunderous_smite", "Thunderous Smite", "🌩️", "+2d6 Donner & Stoß/Prone", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_shining_smite", ignoreCase = true) || it.equals("shining_smite", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_shining_smite", "Shining Smite", "✨", "+2d6 Radiant & Blinded/Licht", isConcentration = true))
+        }
+        if (character.activeBuffIds.any { it.equals("srd_blinding_smite", ignoreCase = true) || it.equals("blinding_smite", ignoreCase = true) }) {
+            activeBuffList.add(ActiveBuffInfo("srd_blinding_smite", "Blinding Smite", "☀️", "+3d8 Radiant & Blinded", isConcentration = true))
+        }
         if (character.activeBuffIds.any { it.equals("srd_detect_magic", ignoreCase = true) || it.equals("detect_magic", ignoreCase = true) }) {
             activeBuffList.add(ActiveBuffInfo("srd_detect_magic", "Detect Magic (Magie entdecken)", "🔮", "Auren innerhalb 30ft spürbar", isConcentration = true))
         }

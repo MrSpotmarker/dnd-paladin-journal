@@ -192,8 +192,20 @@ fun CombatDashboardScreen(
         EquippedWeaponsCard(
             attacks = stats.attacks,
             spellSlots = stats.spellSlots,
+            preparedSpells = preparedSpells,
             attacksPerAction = stats.attacksPerAction,
             onUseSlot = { viewModel.useSpellSlot(it) },
+            onTriggerSmite = { smite, slotLevel ->
+                if (smite.isConcentration) {
+                    viewModel.toggleBuff(
+                        buffId = smite.id,
+                        isConcentration = true,
+                        slotLevelToConsume = slotLevel
+                    )
+                } else {
+                    viewModel.useSpellSlot(slotLevel)
+                }
+            },
             onShowDetail = { viewModel.showDetail(it) }
         )
 

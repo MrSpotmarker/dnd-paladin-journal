@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -48,6 +50,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paladin.app.model.AttackInfo
 import com.paladin.app.model.DetailItem
+import com.paladin.app.model.SmiteConfig
+import com.paladin.app.model.SmiteRegistry
+import com.paladin.app.model.Spell
 import com.paladin.app.model.SpellSlotState
 import com.paladin.app.ui.theme.BorderBrass
 import com.paladin.app.ui.theme.BorderDark
@@ -67,8 +72,10 @@ fun EquippedWeaponsCard(
     attacks: List<AttackInfo>,
     modifier: Modifier = Modifier,
     spellSlots: List<SpellSlotState> = emptyList(),
+    preparedSpells: List<Spell> = emptyList(),
     attacksPerAction: Int = 1,
     onUseSlot: (Int) -> Unit = {},
+    onTriggerSmite: (SmiteConfig, Int) -> Unit = { _, slot -> onUseSlot(slot) },
     onShowDetail: (DetailItem) -> Unit = {}
 ) {
     Card(
@@ -139,7 +146,9 @@ fun EquippedWeaponsCard(
                         EquippedWeaponRow(
                             attack = attack,
                             spellSlots = spellSlots,
+                            preparedSpells = preparedSpells,
                             onUseSlot = onUseSlot,
+                            onTriggerSmite = onTriggerSmite,
                             onShowDetail = { onShowDetail(DetailItem.ItemInfo(attack.item)) }
                         )
                     }
@@ -154,13 +163,23 @@ fun EquippedWeaponsCard(
 fun EquippedWeaponRow(
     attack: AttackInfo,
     spellSlots: List<com.paladin.app.model.SpellSlotState> = emptyList(),
+    preparedSpells: List<Spell> = emptyList(),
     onUseSlot: (Int) -> Unit = {},
+    onTriggerSmite: (SmiteConfig, Int) -> Unit = { _, slot -> onUseSlot(slot) },
     onShowDetail: () -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var showSmitePanel by remember { mutableStateOf(false) }
     var selectedSmiteSlotLevel by remember { mutableIntStateOf(1) }
     var smiteExecutedMessage by remember { mutableStateOf<String?>(null) }
+
+    val availableSmites = remember(preparedSpells) {
+        SmiteRegistry.resolveAvailableSmites(preparedSpells)
+    }
+    var selectedSmiteId by remember(availableSmites) {
+        mutableStateOf(availableSmites.firstOrNull()?.id ?: SmiteRegistry.PALADINS_SMITE.id)
+    }
+    val selectedSmite = availableSmites.find { it.id == selectedSmiteId } ?: availableSmites.firstOrNull() ?: SmiteRegistry.PALADINS_SMITE
 
     Card(
         modifier = Modifier
@@ -367,8 +386,13 @@ fun EquippedWeaponRow(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Text("⚡", fontSize = 13.sp)
-                                    Text("Paladin's Smite", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PaladinGoldBright)
+                                    Text(selectedSmite.icon, fontSize = 13.sp)
+                                    Text(
+                                        if (availableSmites.size > 1) "Schnell-Smite (${selectedSmite.name})" else selectedSmite.name,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PaladinGoldBright
+                                    )
                                 }
                                 TextButton(
                                     onClick = { showSmitePanel = !showSmitePanel },
@@ -380,16 +404,50 @@ fun EquippedWeaponRow(
                             }
 
                             if (showSmitePanel) {
-                                if (availableSlots.isEmpty()) {
+                                // 1. Smite-Auswahl (wenn mehr als 1 Smite verfügbar ist)
+                                if (availableSmites.size > 1) {
                                     Text(
-                                        text = "Keine Zauberplätze mehr verfügbar!",
+                                        text = "Wähle vorbereiteten Smite:",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary
+                                    )
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier.horizontalScroll(rememberScrollState())
+                                    ) {
+                                        availableSmites.forEach { smite ->
+                                            FilterChip(
+                                                selected = smite.id == selectedSmite.id,
+                                                onClick = {
+                                                    selectedSmiteId = smite.id
+                                                    smiteExecutedMessage = null
+                                                },
+                                                label = { Text("${smite.icon} ${smite.name}", fontSize = 11.sp) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = PaladinGold,
+                                                    selectedLabelColor = DarkNavyBackground
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+
+                                val eligibleSlots = spellSlots.filter { it.remainingSlots > 0 && it.level >= selectedSmite.baseLevel }
+                                if (eligibleSlots.isEmpty()) {
+                                    val anySlots = spellSlots.any { it.remainingSlots > 0 }
+                                    Text(
+                                        text = if (anySlots) {
+                                            "Kein Zauberplatz ab Grad ${selectedSmite.baseLevel} für ${selectedSmite.name} verfügbar!"
+                                        } else {
+                                            "Keine Zauberplätze mehr verfügbar!"
+                                        },
                                         fontSize = 11.sp,
                                         color = HealthRed
                                     )
                                 } else {
-                                    val currentSlot = availableSlots.find { it.level == selectedSmiteSlotLevel } ?: availableSlots.first()
-                                    val smiteDiceCount = 1 + currentSlot.level // 2024: Grad 1 = 2d8, Grad 2 = 3d8, etc.
-                                    val totalDamageFormula = "${attack.damageString} + ${smiteDiceCount}d8 Radiant"
+                                    val currentSlot = eligibleSlots.find { it.level == selectedSmiteSlotLevel } ?: eligibleSlots.first()
+                                    val smiteBonus = selectedSmite.damageBonusString(currentSlot.level)
+                                    val totalDamageFormula = "${attack.damageString} + $smiteBonus"
 
                                     Text(
                                         text = "Wähle Zauberplatz-Grad:",
@@ -398,7 +456,7 @@ fun EquippedWeaponRow(
                                     )
 
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        availableSlots.forEach { slot ->
+                                        eligibleSlots.forEach { slot ->
                                             FilterChip(
                                                 selected = slot.level == currentSlot.level,
                                                 onClick = { selectedSmiteSlotLevel = slot.level },
@@ -416,7 +474,7 @@ fun EquippedWeaponRow(
                                         shape = RoundedCornerShape(6.dp),
                                         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
                                     ) {
-                                        Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                             Text(
                                                 text = "🔥 Gesamtschaden: $totalDamageFormula",
                                                 fontSize = 12.sp,
@@ -424,17 +482,25 @@ fun EquippedWeaponRow(
                                                 color = PaladinGoldBright
                                             )
                                             Text(
-                                                text = "Bonus-Aktion direkt nach Treffer • Grad ${currentSlot.level} Slot verbraucht",
+                                                text = "Bonus-Aktion bei Treffer • Grad ${currentSlot.level} Slot" +
+                                                    if (selectedSmite.isConcentration) " • Konzentration" else "",
                                                 fontSize = 10.sp,
                                                 color = TextSecondary
                                             )
+                                            if (selectedSmite.riderEffect.isNotBlank()) {
+                                                Text(
+                                                    text = "• ${selectedSmite.riderEffect}",
+                                                    fontSize = 10.sp,
+                                                    color = PaladinGold.copy(alpha = 0.9f)
+                                                )
+                                            }
                                         }
                                     }
 
                                     Button(
                                         onClick = {
-                                            onUseSlot(currentSlot.level)
-                                            smiteExecutedMessage = "Grad ${currentSlot.level} Smite gezündet (+${smiteDiceCount}d8 Radiant)!"
+                                            onTriggerSmite(selectedSmite, currentSlot.level)
+                                            smiteExecutedMessage = "Grad ${currentSlot.level} ${selectedSmite.name} gezündet (+$smiteBonus)!"
                                         },
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = PaladinGold,
@@ -443,7 +509,7 @@ fun EquippedWeaponRow(
                                         modifier = Modifier.fillMaxWidth().height(32.dp),
                                         shape = RoundedCornerShape(6.dp)
                                     ) {
-                                        Text("⚡ Slot verbrauchen & Smite zünden", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        Text("⚡ Slot verbrauchen & ${selectedSmite.name} zünden", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
 
                                     if (smiteExecutedMessage != null) {

@@ -261,6 +261,7 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
                     "srd_bless", "srd_shield_of_faith", "srd_divine_favor",
                     "srd_heroism", "srd_compelled_duel", "srd_searing_smite",
                     "srd_wrathful_smite", "srd_thunderous_smite",
+                    "srd_shining_smite", "srd_blinding_smite", "srd_staggering_smite", "srd_banishing_smite",
                     "srd_detect_magic", "srd_protection_from_evil_and_good"
                 )
                 currentBuffs.removeAll { it in concentrationBuffs }
