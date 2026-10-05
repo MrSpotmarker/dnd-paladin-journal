@@ -307,7 +307,8 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         hpGain: Int,
         newOath: String? = null,
         newFightingStyle: String? = null,
-        newFeats: List<String>? = null
+        newFeats: List<String>? = null,
+        newAbilityScores: AbilityScores? = null
     ) {
         val oldLevel = character.value.level
         val levelDiff = (newLevel - oldLevel).coerceAtLeast(0)
@@ -315,16 +316,73 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         val updatedOath = if (newLevel >= 3) (newOath ?: character.value.oath) else character.value.oath
         val updatedFightingStyle = if (newLevel >= 2) (newFightingStyle ?: character.value.fightingStyle) else character.value.fightingStyle
         val updatedFeats = newFeats ?: character.value.feats
+        val updatedAbilities = newAbilityScores ?: character.value.baseAbilityScores
 
         val updated = character.value.copy(
             level = newLevel.coerceIn(1, 20),
             oath = updatedOath,
             fightingStyle = updatedFightingStyle,
             feats = updatedFeats,
+            baseAbilityScores = updatedAbilities,
             maxHpManualAdjustment = character.value.maxHpManualAdjustment + (if (hpGain > 0) hpGain - (levelDiff * 6) else 0),
             currentHp = character.value.currentHp + addedHp
         )
         repository.updateCharacter(updated)
+    }
+
+    fun summonSteedFree() {
+        if (!character.value.freeFindSteedUsed) {
+            val maxHp = character.value.steedMaxHpOverride ?: (5 + 10 * character.value.level)
+            repository.updateCharacter(
+                character.value.copy(
+                    freeFindSteedUsed = true,
+                    isSteedSummoned = true,
+                    steedCurrentHp = maxHp,
+                    steedSpecialUsed = false
+                )
+            )
+        }
+    }
+
+    fun summonSteedWithSlot(slotLevel: Int = 2) {
+        val currentUsages = character.value.spellSlotUsages.toMutableMap()
+        val current = currentUsages[slotLevel] ?: 0
+        val maxSlots = calculatedStats.value.spellSlots.firstOrNull { it.level == slotLevel }?.maxSlots ?: 0
+        if (current < maxSlots) {
+            currentUsages[slotLevel] = current + 1
+            val maxHp = character.value.steedMaxHpOverride ?: (5 + 10 * character.value.level)
+            repository.updateCharacter(
+                character.value.copy(
+                    spellSlotUsages = currentUsages,
+                    isSteedSummoned = true,
+                    steedCurrentHp = maxHp,
+                    steedSpecialUsed = false
+                )
+            )
+        }
+    }
+
+    fun dismissSteed() {
+        repository.updateCharacter(character.value.copy(isSteedSummoned = false))
+    }
+
+    fun updateSteedHp(currentHp: Int, maxHpOverride: Int? = null) {
+        val sheet = character.value
+        val effectiveMax = maxHpOverride ?: sheet.steedMaxHpOverride ?: (5 + 10 * sheet.level)
+        repository.updateCharacter(
+            sheet.copy(
+                steedCurrentHp = currentHp.coerceIn(0, effectiveMax),
+                steedMaxHpOverride = maxHpOverride
+            )
+        )
+    }
+
+    fun setSteedCreatureType(type: String) {
+        repository.updateCharacter(character.value.copy(steedCreatureType = type))
+    }
+
+    fun toggleSteedSpecialUsed() {
+        repository.updateCharacter(character.value.copy(steedSpecialUsed = !character.value.steedSpecialUsed))
     }
 
     fun updateDmOverrides(overrides: DmOverrides) {

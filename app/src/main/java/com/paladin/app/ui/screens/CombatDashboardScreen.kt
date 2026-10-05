@@ -160,13 +160,36 @@ fun CombatDashboardScreen(
             onSetTempHp = { viewModel.setTempHp(it) }
         )
 
-        // Equipped Weapons & Attacks Card mit Smite-Rechner
+        // Equipped Weapons & Attacks Card mit Smite-Rechner & Extra Attack
         EquippedWeaponsCard(
             attacks = stats.attacks,
             spellSlots = stats.spellSlots,
+            attacksPerAction = stats.attacksPerAction,
             onUseSlot = { viewModel.useSpellSlot(it) },
             onShowDetail = { viewModel.showDetail(it) }
         )
+
+        // Stufe 5: Treues Reittier (Faithful Steed)
+        if (character.level >= 5) {
+            FaithfulSteedCard(
+                isSummoned = character.isSteedSummoned,
+                freeUsageUsed = character.freeFindSteedUsed,
+                currentHp = stats.steedCurrentHp,
+                maxHp = stats.steedMaxHp,
+                spellAttackBonus = stats.spellAttackBonus,
+                spellSaveDc = stats.spellSaveDc,
+                creatureType = character.steedCreatureType,
+                isSpecialUsed = character.steedSpecialUsed,
+                spellSlots = stats.spellSlots,
+                onSummonFree = { viewModel.summonSteedFree() },
+                onSummonWithSlot = { viewModel.summonSteedWithSlot(it) },
+                onDismissSteed = { viewModel.dismissSteed() },
+                onUpdateHp = { current, maxOverride -> viewModel.updateSteedHp(current, maxOverride) },
+                onSelectCreatureType = { viewModel.setSteedCreatureType(it) },
+                onToggleSpecialUsed = { viewModel.toggleSteedSpecialUsed() },
+                onShowDetail = { viewModel.showDetail(it) }
+            )
+        }
 
         // Unified Spells & Spell Slots Section
         SpellsAndSlotsSection(

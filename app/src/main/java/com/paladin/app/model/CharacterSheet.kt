@@ -89,7 +89,13 @@ data class CharacterSheet(
     val journalEntries: List<JournalEntry> = emptyList(),
     val customProfileImagePath: String? = null,
     val customFullImagePath: String? = null,
-    val activeConditions: Set<Condition> = emptySet()
+    val activeConditions: Set<Condition> = emptySet(),
+    val freeFindSteedUsed: Boolean = false,
+    val isSteedSummoned: Boolean = false,
+    val steedCurrentHp: Int? = null,
+    val steedMaxHpOverride: Int? = null,
+    val steedCreatureType: String = "Celestial",
+    val steedSpecialUsed: Boolean = false
 ) {
     val totalGoldEquivalent: Double
         get() = goldPieces + (silverPieces / 10.0) + (copperPieces / 100.0)

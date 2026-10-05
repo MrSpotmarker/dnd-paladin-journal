@@ -74,6 +74,11 @@ object CharacterStatsEngine {
         val totalWeight = character.inventory.sumOf { it.weightLbs * it.quantity }
         val carryCapacity = (effectiveAbilities.strength * 15).toDouble()
 
+        val attacksPerAction = if (level >= 5) 2 else 1
+        val hasRadiantStrikes = level >= 11
+        val steedMaxHp = character.steedMaxHpOverride ?: (5 + 10 * level)
+        val steedCurrentHp = character.steedCurrentHp ?: steedMaxHp
+
         val attacks = character.inventory
             .filter { it.type == ItemType.WEAPON && it.isEquipped }
             .map { weapon ->
@@ -86,7 +91,8 @@ object CharacterStatsEngine {
                     masteredWeapons = character.masteredWeaponNames,
                     fightingStyle = character.fightingStyle,
                     feats = character.feats,
-                    activeBuffIds = character.activeBuffIds
+                    activeBuffIds = character.activeBuffIds,
+                    hasRadiantStrikes = hasRadiantStrikes
                 )
             }
 
@@ -168,7 +174,12 @@ object CharacterStatsEngine {
             speedFt = character.species.baseSpeedFt,
             hasDmOverrides = character.dmOverrides.isActive,
             activeBuffs = activeBuffList,
-            activeConditions = character.activeConditions
+            activeConditions = character.activeConditions,
+            attacksPerAction = attacksPerAction,
+            hasRadiantStrikes = hasRadiantStrikes,
+            steedHp = steedMaxHp,
+            steedCurrentHp = steedCurrentHp,
+            steedMaxHp = steedMaxHp
         )
     }
 
@@ -296,7 +307,8 @@ object CharacterStatsEngine {
         masteredWeapons: List<String>,
         fightingStyle: String? = null,
         feats: List<String> = emptyList(),
-        activeBuffIds: Set<String> = emptySet()
+        activeBuffIds: Set<String> = emptySet(),
+        hasRadiantStrikes: Boolean = false
     ): AttackInfo {
         val useDex = weapon.isFinesse && dexMod > strMod
         val abilityMod = if (useDex) dexMod else strMod
@@ -352,6 +364,11 @@ object CharacterStatsEngine {
         if (activeBuffIds.any { it.equals("srd_wrathful_smite", ignoreCase = true) || it.equals("wrathful_smite", ignoreCase = true) }) {
             damageBreakdown.add("+1d6 Psychisch aus Zorniger Smite")
             buffNotes.add("👻 Zorniger Smite aktiv (+1d6 Psychisch & Verängstigt)")
+        }
+        if (hasRadiantStrikes && !weapon.name.contains("Bow", ignoreCase = true) && !weapon.name.contains("Crossbow", ignoreCase = true)) {
+            damageStr += " + 1d8 Radiant"
+            damageBreakdown.add("+1d8 Gleißend aus Strahlende Treffer (Radiant Strikes)")
+            buffNotes.add("✨ Strahlende Treffer (Radiant Strikes): +1d8 Gleißend")
         }
 
         val attackParts = mutableListOf<String>()

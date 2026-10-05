@@ -25,6 +25,7 @@ import com.paladin.app.ui.theme.*
 fun EquippedWeaponsCard(
     attacks: List<AttackInfo>,
     spellSlots: List<com.paladin.app.model.SpellSlotState> = emptyList(),
+    attacksPerAction: Int = 1,
     onUseSlot: (Int) -> Unit = {},
     onShowDetail: (DetailItem) -> Unit = {},
     modifier: Modifier = Modifier
@@ -41,20 +42,38 @@ fun EquippedWeaponsCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("⚔️", fontSize = 16.sp)
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("⚔️", fontSize = 16.sp)
+                        Text(
+                            text = "Waffen & Angriffe",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = PaladinGold
+                        )
+                    }
                     Text(
-                        text = "Waffen & Angriffe",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = PaladinGold
+                        text = "${attacks.size} ausgerüstet",
+                        fontSize = 11.sp,
+                        color = TextSecondary
                     )
                 }
-                Text(
-                    text = "${attacks.size} ausgerüstet",
-                    fontSize = 11.sp,
-                    color = TextSecondary
-                )
+
+                if (attacksPerAction >= 2) {
+                    Surface(
+                        color = PaladinGold.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(6.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, PaladinGold.copy(alpha = 0.6f))
+                    ) {
+                        Text(
+                            text = "⚔️ 2 Angriffe (Extra Attack)",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PaladinGoldBright,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
 
             HorizontalDivider(color = BorderDark)

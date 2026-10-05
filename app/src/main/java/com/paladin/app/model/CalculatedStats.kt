@@ -53,5 +53,10 @@ data class CalculatedStats(
     val speedFt: Int = 30,
     val hasDmOverrides: Boolean,
     val activeBuffs: List<ActiveBuffInfo> = emptyList(),
-    val activeConditions: Set<Condition> = emptySet()
+    val activeConditions: Set<Condition> = emptySet(),
+    val attacksPerAction: Int = 1,
+    val hasRadiantStrikes: Boolean = false,
+    val steedHp: Int = 0,
+    val steedCurrentHp: Int = 0,
+    val steedMaxHp: Int = 0
 )

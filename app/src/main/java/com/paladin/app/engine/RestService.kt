@@ -71,7 +71,10 @@ object RestService {
             heroicInspirations = character.species.defaultInspirationsOnLongRest,
             spellSlotUsages = emptyMap(),
             activeBuffIds = emptySet(),
-            deathSaves = DeathSavesState(successes = 0, failures = 0)
+            deathSaves = DeathSavesState(successes = 0, failures = 0),
+            freeFindSteedUsed = false,
+            steedSpecialUsed = false,
+            steedCurrentHp = character.steedMaxHpOverride ?: (5 + 10 * character.level)
         )
     }
 

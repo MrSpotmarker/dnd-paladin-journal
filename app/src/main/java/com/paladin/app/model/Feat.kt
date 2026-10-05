@@ -106,6 +106,64 @@ object FeatCatalog {
             category = FeatCategory.FIGHTING_STYLE,
             description = "Mit göttlichen Wundern gesegnet.",
             mechanicalBenefit = "2 Zaubertricks (Cantrips) der Klerikerliste (z. B. Guidance, Sacred Flame)."
+        ),
+
+        // Allgemeine Talente (General Feats - Stufe 4+)
+        FeatDefinition(
+            id = "war_caster",
+            name = "War Caster (Kriegsmagier)",
+            category = FeatCategory.GENERAL,
+            description = "Unerschütterliche Konzentration und Zauberkraft mitten im Getümmel.",
+            mechanicalBenefit = "Vorteil auf Konzentrationswürfe; Zaubern mit Waffe & Schild in den Händen; Zauber als Gelegenheitsangriff wirken."
+        ),
+        FeatDefinition(
+            id = "sentinel",
+            name = "Sentinel (Wachsamer Wächter)",
+            category = FeatCategory.GENERAL,
+            description = "Hält Feinde unerbittlich fest und schützt Verbündete.",
+            mechanicalBenefit = "Gelegenheitsangriff setzt gegnerisches Tempo auf 0 ft; Gelegenheitsangriff selbst bei 'Rückzug'; Reaktion gegen Angreifer naher Verbündeter."
+        ),
+        FeatDefinition(
+            id = "polearm_master",
+            name = "Polearm Master (Stangenwaffenmeister)",
+            category = FeatCategory.GENERAL,
+            description = "Tödliche Reichweite und schnelle Schläge mit Hellebarde, Pike oder Speer.",
+            mechanicalBenefit = "Bonus-Aktion: Schlag mit dem Waffenende (1d4 Wucht); Gelegenheitsangriff, wenn eine Kreatur in deine Reichweite tritt."
+        ),
+        FeatDefinition(
+            id = "heavy_armor_master",
+            name = "Heavy Armor Master",
+            category = FeatCategory.GENERAL,
+            description = "Gepanzert wie eine lebende Festung.",
+            mechanicalBenefit = "Reduziert erlittenen Hieb-, Stich- und Wuchtschaden (sowohl magisch als auch nicht-magisch) um deinen Übungsbonus (+PB)!"
+        ),
+        FeatDefinition(
+            id = "great_weapon_master",
+            name = "Great Weapon Master",
+            category = FeatCategory.GENERAL,
+            description = "Verheerende Wucht mit Zweihandwaffen.",
+            mechanicalBenefit = "Bei Kritischem Treffer oder Kill: 1 Bonus-Angriff; Angriffe mit Zweihandwaffen erhalten +PB zusätzlichen Waffenschaden."
+        ),
+        FeatDefinition(
+            id = "shield_master",
+            name = "Shield Master (Schildmeister)",
+            category = FeatCategory.GENERAL,
+            description = "Verwendet den Schild sowohl als Waffe als auch als rettende Deckung.",
+            mechanicalBenefit = "Bonus-Aktion nach Angriff: Ziel zu Boden werfen (Prone); Schild-Bonus auf DEX-Rettungswürfe; Reaktion: 0 Schaden statt halber Schaden."
+        ),
+        FeatDefinition(
+            id = "inspiring_leader",
+            name = "Inspiring Leader",
+            category = FeatCategory.GENERAL,
+            description = "Inspirierende Worte vor der Schlacht stärken die Moral.",
+            mechanicalBenefit = "Nach Rast: Bis zu 6 Gefährten erhalten temporäre HP in Höhe von Charakterstufe + CHA-Modifikator."
+        ),
+        FeatDefinition(
+            id = "mage_slayer",
+            name = "Mage Slayer (Magiertöter)",
+            category = FeatCategory.GENERAL,
+            description = "Gezieltes Vorgehen gegen feindliche Zauberwirker.",
+            mechanicalBenefit = "Vorteil auf Saves gegen Zauber im Umkreis von 5 ft; Treffer zwingt Zauberer zu Nachteil auf Konzentrationswürfe; 1x/Tag Save automatisch bestehen."
         )
     )
 
