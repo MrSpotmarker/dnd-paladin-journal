@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-android {
+configure<com.android.build.api.dsl.ApplicationExtension> {
     namespace = "com.paladin.app"
     compileSdk = 37
 
@@ -35,9 +35,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlin {
-        jvmToolchain(21)
-    }
     buildFeatures {
         compose = true
     }
@@ -47,6 +44,10 @@ android {
         }
     }
     buildToolsVersion = "36.0.0"
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 dependencies {
