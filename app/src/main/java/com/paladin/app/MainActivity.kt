@@ -82,14 +82,16 @@ class MainActivity : ComponentActivity() {
                                     NavigationBarItem(
                                         selected = selectedTab == tab,
                                         onClick = { selectedTab = tab },
-                                        icon = { Icon(tab.icon, contentDescription = tab.title) },
-                                        label = { 
+                                        icon = {
+                                            Icon(tab.icon, contentDescription = tab.title)
+                                        },
+                                        label = {
                                             Text(
                                                 tab.title,
                                                 maxLines = 1,
                                                 fontSize = 10.sp,
                                                 fontWeight = if (selectedTab == tab) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
-                                            ) 
+                                            )
                                         },
                                         alwaysShowLabel = false,
                                         colors = NavigationBarItemDefaults.colors(

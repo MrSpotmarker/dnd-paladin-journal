@@ -532,4 +532,12 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
     fun isFeatImported(name: String): Boolean {
         return character.value.feats.any { it.equals(name, ignoreCase = true) }
     }
+
+    fun updateProfileImagePath(path: String?) {
+        repository.updateCharacter(character.value.copy(customProfileImagePath = path))
+    }
+
+    fun updateFullImagePath(path: String?) {
+        repository.updateCharacter(character.value.copy(customFullImagePath = path))
+    }
 }

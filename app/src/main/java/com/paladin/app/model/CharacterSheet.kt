@@ -81,7 +81,9 @@ data class CharacterSheet(
     val copperPieces: Int = 0,
     val deathSaves: DeathSavesState = DeathSavesState(),
     val notes: String = "",
-    val journalEntries: List<JournalEntry> = emptyList()
+    val journalEntries: List<JournalEntry> = emptyList(),
+    val customProfileImagePath: String? = null,
+    val customFullImagePath: String? = null
 ) {
     val totalGoldEquivalent: Double
         get() = goldPieces + (silverPieces / 10.0) + (copperPieces / 100.0)

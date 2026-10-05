@@ -1,7 +1,10 @@
 package com.paladin.app.ui.screens
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,10 +18,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paladin.app.R
 import com.paladin.app.model.Ability
 import com.paladin.app.model.Species
 import com.paladin.app.ui.CharacterViewModel
@@ -520,10 +526,163 @@ fun LevelUpScreen(
             }
         }
 
+        // ── Image Customization Card ───────────────────────────────────────
+        CharacterImagePickerCard(viewModel = viewModel)
+
         // Backup Export / Import Card
         CharacterBackupCard(
             onExportJson = { viewModel.exportBackupJson() },
             onImportJson = { viewModel.importBackupJson(it) }
         )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Bildauswahl-Karte
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun CharacterImagePickerCard(viewModel: CharacterViewModel) {
+    val context = LocalContext.current
+    val character by viewModel.character.collectAsState()
+
+    // Launcher: Profilbild
+    val profilePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            // Persistente Leseberechtigung sichern
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            viewModel.updateProfileImagePath(uri.toString())
+        }
+    }
+
+    // Launcher: Vollbild
+    val fullPickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            viewModel.updateFullImagePath(uri.toString())
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = com.paladin.app.ui.theme.SurfaceCard),
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, com.paladin.app.ui.theme.BorderBrass.copy(alpha = 0.4f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = "🖼️ Charakterbilder",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = com.paladin.app.ui.theme.PaladinGold
+            )
+            Text(
+                text = "Wähle eigene Bilder vom Gerät oder setze auf die Standard-Illustrationen zurück.",
+                fontSize = 12.sp,
+                color = com.paladin.app.ui.theme.TextSecondary
+            )
+
+            HorizontalDivider(color = com.paladin.app.ui.theme.BorderDark)
+
+            // Profilbild
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Vorschau
+                com.paladin.app.ui.components.CharacterProfileAvatar(
+                    customProfileImagePath = character.customProfileImagePath,
+                    customFullImagePath = character.customFullImagePath,
+                    size = 52
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Profilbild (Tab-Icon)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = com.paladin.app.ui.theme.TextPrimary)
+                    if (character.customProfileImagePath != null) {
+                        Text("✅ Eigenes Bild aktiv", fontSize = 11.sp, color = com.paladin.app.ui.theme.ProficiencyGreen)
+                    } else {
+                        Text("Standard-Bild", fontSize = 11.sp, color = com.paladin.app.ui.theme.TextSecondary)
+                    }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FilledTonalButton(
+                        onClick = { profilePickerLauncher.launch(arrayOf("image/*")) },
+                        modifier = Modifier.height(36.dp)
+                    ) { Text("Ändern", fontSize = 12.sp) }
+                    if (character.customProfileImagePath != null) {
+                        OutlinedButton(
+                            onClick = { viewModel.updateProfileImagePath(null) },
+                            modifier = Modifier.height(36.dp)
+                        ) { Text("Reset", fontSize = 12.sp) }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = com.paladin.app.ui.theme.BorderDark)
+
+            // Vollbild
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Thumbnail des Vollbildes
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(1.dp, com.paladin.app.ui.theme.PaladinGold, RoundedCornerShape(8.dp))
+                ) {
+                    if (character.customFullImagePath != null) {
+                        coil.compose.AsyncImage(
+                            model = coil.request.ImageRequest.Builder(LocalContext.current)
+                                .data(android.net.Uri.parse(character.customFullImagePath))
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Vollbild Vorschau",
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = com.paladin.app.R.drawable.lein),
+                            contentDescription = "Vollbild Vorschau",
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Vollansicht (Klick auf Profilbild)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = com.paladin.app.ui.theme.TextPrimary)
+                    if (character.customFullImagePath != null) {
+                        Text("✅ Eigenes Bild aktiv", fontSize = 11.sp, color = com.paladin.app.ui.theme.ProficiencyGreen)
+                    } else {
+                        Text("Standard-Bild", fontSize = 11.sp, color = com.paladin.app.ui.theme.TextSecondary)
+                    }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FilledTonalButton(
+                        onClick = { fullPickerLauncher.launch(arrayOf("image/*")) },
+                        modifier = Modifier.height(36.dp)
+                    ) { Text("Ändern", fontSize = 12.sp) }
+                    if (character.customFullImagePath != null) {
+                        OutlinedButton(
+                            onClick = { viewModel.updateFullImagePath(null) },
+                            modifier = Modifier.height(36.dp)
+                        ) { Text("Reset", fontSize = 12.sp) }
+                    }
+                }
+            }
+        }
     }
 }

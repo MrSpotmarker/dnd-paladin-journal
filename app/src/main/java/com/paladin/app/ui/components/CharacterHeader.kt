@@ -1,6 +1,8 @@
 package com.paladin.app.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -12,9 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.border
+import com.paladin.app.R
 import androidx.compose.ui.unit.sp
 import com.paladin.app.model.CalculatedStats
 import com.paladin.app.model.CharacterSheet
@@ -43,26 +47,40 @@ fun CharacterHeader(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = character.name,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                // ── Profilbild + Name/Subtitle ────────────────────────────
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    CharacterProfileAvatar(
+                        customProfileImagePath = character.customProfileImagePath,
+                        customFullImagePath = character.customFullImagePath,
+                        size = 56
                     )
-                    val subtitleParts = buildList {
-                        add("Stufe ${character.level} Paladin")
-                        add(character.species.displayName)
-                        character.oath?.let { add(it) }
+
+                    Column {
+                        Text(
+                            text = character.name,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        val subtitleParts = buildList {
+                            add("Stufe ${character.level} Paladin")
+                            add(character.species.displayName)
+                            character.oath?.let { add(it) }
+                        }
+                        Text(
+                            text = subtitleParts.joinToString(" • "),
+                            fontSize = 13.sp,
+                            color = PaladinGold,
+                            modifier = Modifier.clickable { onShowSpeciesDetail() }
+                        )
                     }
-                    Text(
-                        text = subtitleParts.joinToString(" • "),
-                        fontSize = 13.sp,
-                        color = PaladinGold,
-                        modifier = Modifier.clickable { onShowSpeciesDetail() }
-                    )
                 }
 
+                // ── DM-Override Button ────────────────────────────────────
                 IconButton(
                     onClick = onOpenOverrides,
                     modifier = Modifier
