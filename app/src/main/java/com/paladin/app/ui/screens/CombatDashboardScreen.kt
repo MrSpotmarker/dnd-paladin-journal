@@ -43,7 +43,6 @@ import com.paladin.app.ui.components.ConditionsSection
 import com.paladin.app.ui.components.DmOverrideDialog
 import com.paladin.app.ui.components.EditBaseAbilitiesDialog
 import com.paladin.app.ui.components.EquippedWeaponsCard
-import com.paladin.app.ui.components.FaithfulSteedCard
 import com.paladin.app.ui.components.FeatsDialog
 import com.paladin.app.ui.components.HealthCard
 import com.paladin.app.ui.components.LayOnHandsCard
@@ -53,6 +52,7 @@ import com.paladin.app.ui.components.PreparedSpellsDialog
 import com.paladin.app.ui.components.ShortRestDialog
 import com.paladin.app.ui.components.SkillsSection
 import com.paladin.app.ui.components.SpellsAndSlotsSection
+import com.paladin.app.ui.components.steed.FaithfulSteedCard
 import com.paladin.app.ui.theme.ChaunteaGreen
 import com.paladin.app.ui.theme.ChaunteaGreenBright
 import com.paladin.app.ui.theme.DarkNavyBackground

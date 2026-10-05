@@ -99,4 +99,7 @@ data class CharacterSheet(
 ) {
     val totalGoldEquivalent: Double
         get() = goldPieces + (silverPieces / 10.0) + (copperPieces / 100.0)
+
+    val subclass: PaladinSubclass?
+        get() = PaladinSubclass.fromOathString(oath)
 }
