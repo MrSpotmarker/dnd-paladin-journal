@@ -3,6 +3,7 @@ package com.paladin.app.engine
 import com.paladin.app.model.Ability
 import com.paladin.app.model.AbilityScores
 import com.paladin.app.model.ActiveBuffInfo
+import com.paladin.app.model.ArmorClassElement
 import com.paladin.app.model.ArmorType
 import com.paladin.app.model.AttackInfo
 import com.paladin.app.model.CalculatedStats
@@ -41,7 +42,7 @@ object CharacterStatsEngine {
         val maxHp = max(1, baseLvl1Hp + higherLvlHp + toughBonus + character.maxHpManualAdjustment + character.dmOverrides.hpMaxBonus)
 
         // 3. Rüstungsklasse (AC)
-        val (ac, acBreakdown) = calculateArmorClass(character, dexMod)
+        val (ac, acBreakdown, acElements) = calculateArmorClass(character, dexMod)
 
         // 4. Rettungswürfe & Aura of Protection (Level 6+)
         val savingThrowProficiencies = setOf(Ability.WISDOM, Ability.CHARISMA)
@@ -158,6 +159,7 @@ object CharacterStatsEngine {
             modifiers = modifiers,
             armorClass = ac,
             armorClassBreakdown = acBreakdown,
+            armorClassElements = acElements,
             maxHp = maxHp,
             currentHp = character.currentHp,
             tempHp = character.tempHp,
@@ -231,9 +233,16 @@ object CharacterStatsEngine {
         return scores
     }
 
-    private fun calculateArmorClass(character: CharacterSheet, dexMod: Int): Pair<Int, String> {
+    private fun calculateArmorClass(character: CharacterSheet, dexMod: Int): Triple<Int, String, List<ArmorClassElement>> {
         if (character.dmOverrides.acOverride != null) {
-            return character.dmOverrides.acOverride to "DM Override (${character.dmOverrides.acOverride})"
+            val overrideVal = character.dmOverrides.acOverride
+            val element = ArmorClassElement(
+                name = "DM Fester Override",
+                value = "$overrideVal",
+                detail = "Vom Spielleiter fest vorgegebener Wert",
+                icon = "⚡"
+            )
+            return Triple(overrideVal, "DM Override ($overrideVal)", listOf(element))
         }
 
         val equippedArmor = character.inventory.firstOrNull { it.type == ItemType.ARMOR && it.isEquipped }
@@ -241,36 +250,121 @@ object CharacterStatsEngine {
 
         var baseAc: Int
         val breakdownParts = mutableListOf<String>()
+        val elements = mutableListOf<ArmorClassElement>()
 
         if (equippedArmor != null) {
             when (equippedArmor.armorType) {
                 ArmorType.HEAVY -> {
                     baseAc = equippedArmor.baseAc
                     breakdownParts.add("${equippedArmor.name} ($baseAc)")
+                    elements.add(
+                        ArmorClassElement(
+                            name = equippedArmor.name,
+                            value = "$baseAc",
+                            detail = "Schwere Rüstung (Basis-RK)",
+                            icon = "🛡️"
+                        )
+                    )
                 }
                 ArmorType.MEDIUM -> {
                     val cappedDex = min(2, dexMod)
                     baseAc = equippedArmor.baseAc + cappedDex
                     breakdownParts.add("${equippedArmor.name} (${equippedArmor.baseAc}) + DEX max 2 ($cappedDex)")
+                    elements.add(
+                        ArmorClassElement(
+                            name = equippedArmor.name,
+                            value = "${equippedArmor.baseAc}",
+                            detail = "Mittlere Rüstung (Basis-RK)",
+                            icon = "🛡️"
+                        )
+                    )
+                    elements.add(
+                        ArmorClassElement(
+                            name = "Geschicklichkeit (DEX)",
+                            value = if (cappedDex >= 0) "+$cappedDex" else "$cappedDex",
+                            detail = "Modifikator (bei mittlerer Rüstung max. +2)",
+                            icon = "💨"
+                        )
+                    )
                 }
                 ArmorType.LIGHT -> {
                     baseAc = equippedArmor.baseAc + dexMod
                     breakdownParts.add("${equippedArmor.name} (${equippedArmor.baseAc}) + DEX ($dexMod)")
+                    elements.add(
+                        ArmorClassElement(
+                            name = equippedArmor.name,
+                            value = "${equippedArmor.baseAc}",
+                            detail = "Leichte Rüstung (Basis-RK)",
+                            icon = "🛡️"
+                        )
+                    )
+                    elements.add(
+                        ArmorClassElement(
+                            name = "Geschicklichkeit (DEX)",
+                            value = if (dexMod >= 0) "+$dexMod" else "$dexMod",
+                            detail = "Voller Geschicklichkeits-Modifikator",
+                            icon = "💨"
+                        )
+                    )
                 }
                 else -> {
                     baseAc = 10 + dexMod
                     breakdownParts.add("Ohne Rüstung (10 + DEX $dexMod)")
+                    elements.add(
+                        ArmorClassElement(
+                            name = "Ohne Rüstung",
+                            value = "10",
+                            detail = "Basis-Wert aller Kreaturen",
+                            icon = "🛡️"
+                        )
+                    )
+                    if (dexMod != 0) {
+                        elements.add(
+                            ArmorClassElement(
+                                name = "Geschicklichkeit (DEX)",
+                                value = if (dexMod >= 0) "+$dexMod" else "$dexMod",
+                                detail = "Geschicklichkeits-Modifikator",
+                                icon = "💨"
+                            )
+                        )
+                    }
                 }
             }
         } else {
             baseAc = 10 + dexMod
             breakdownParts.add("Ohne Rüstung (10 + DEX $dexMod)")
+            elements.add(
+                ArmorClassElement(
+                    name = "Ohne Rüstung",
+                    value = "10",
+                    detail = "Basis-Wert aller Kreaturen",
+                    icon = "🛡️"
+                )
+            )
+            if (dexMod != 0) {
+                elements.add(
+                    ArmorClassElement(
+                        name = "Geschicklichkeit (DEX)",
+                        value = if (dexMod >= 0) "+$dexMod" else "$dexMod",
+                        detail = "Geschicklichkeits-Modifikator",
+                        icon = "💨"
+                    )
+                )
+            }
         }
 
         if (equippedShield != null) {
             val shieldBonus = if (equippedShield.baseAc > 0) equippedShield.baseAc else 2
             baseAc += shieldBonus
             breakdownParts.add("${equippedShield.name} (+$shieldBonus)")
+            elements.add(
+                ArmorClassElement(
+                    name = equippedShield.name,
+                    value = "+$shieldBonus",
+                    detail = "Ausgerüsteter Schild",
+                    icon = "🛡️"
+                )
+            )
         }
 
         // Item-Boni (+1 Rings, Cloaks, Shields etc.)
@@ -280,13 +374,30 @@ object CharacterStatsEngine {
                     if (effect is ItemEffect.AcBonus) {
                         baseAc += effect.bonus
                         breakdownParts.add("${item.name} (+${effect.bonus})")
+                        elements.add(
+                            ArmorClassElement(
+                                name = item.name,
+                                value = "+${effect.bonus}",
+                                detail = "Magischer Bonus",
+                                icon = "💍"
+                            )
+                        )
                     }
                 }
             }
 
         if (character.dmOverrides.acBonus != 0) {
             baseAc += character.dmOverrides.acBonus
-            breakdownParts.add("DM Bonus (+${character.dmOverrides.acBonus})")
+            val dmBonusText = if (character.dmOverrides.acBonus >= 0) "+${character.dmOverrides.acBonus}" else "${character.dmOverrides.acBonus}"
+            breakdownParts.add("DM Bonus ($dmBonusText)")
+            elements.add(
+                ArmorClassElement(
+                    name = "DM Bonus",
+                    value = dmBonusText,
+                    detail = "Spielleiter Modifikator",
+                    icon = "⚡"
+                )
+            )
         }
 
         // Defense Fighting Style (+1 AC wenn Rüstung getragen wird)
@@ -295,6 +406,14 @@ object CharacterStatsEngine {
         if (hasDefense && equippedArmor != null) {
             baseAc += 1
             breakdownParts.add("Defense (+1)")
+            elements.add(
+                ArmorClassElement(
+                    name = "Kampfstil: Verteidigung (Defense)",
+                    value = "+1",
+                    detail = "Paladin-Kampfstil (+1 RK beim Tragen von Rüstung)",
+                    icon = "⚔️"
+                )
+            )
         }
 
         // Aktiver Zauber-Buff: Shield of Faith (+2 AC)
@@ -304,9 +423,17 @@ object CharacterStatsEngine {
         if (hasShieldOfFaith) {
             baseAc += 2
             breakdownParts.add("Shield of Faith (+2)")
+            elements.add(
+                ArmorClassElement(
+                    name = "Shield of Faith (Glaubensschild)",
+                    value = "+2",
+                    detail = "Aktiver Paladin-Zauber (Konzentration)",
+                    icon = "✨"
+                )
+            )
         }
 
-        return baseAc to breakdownParts.joinToString(" + ")
+        return Triple(baseAc, breakdownParts.joinToString(" + "), elements)
     }
 
     private fun calculateAttack(

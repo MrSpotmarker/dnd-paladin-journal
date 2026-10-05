@@ -20,12 +20,20 @@ data class AttackInfo(
     val attackBreakdown: String = ""
 )
 
+data class ArmorClassElement(
+    val name: String,
+    val value: String,
+    val detail: String = "",
+    val icon: String = "🛡️"
+)
+
 data class CalculatedStats(
     val proficiencyBonus: Int,
     val effectiveAbilities: AbilityScores,
     val modifiers: Map<Ability, Int>,
     val armorClass: Int,
     val armorClassBreakdown: String,
+    val armorClassElements: List<ArmorClassElement> = emptyList(),
     val maxHp: Int,
     val currentHp: Int,
     val tempHp: Int,

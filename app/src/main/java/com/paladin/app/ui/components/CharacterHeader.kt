@@ -1,9 +1,11 @@
 package com.paladin.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +29,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +64,15 @@ fun CharacterHeader(
     onShowInspirationDetail: () -> Unit = {},
     onShowSpeciesDetail: () -> Unit = {}
 ) {
+    var showAcBreakdownDialog by remember { mutableStateOf(false) }
+
+    if (showAcBreakdownDialog) {
+        ArmorClassBreakdownDialog(
+            stats = stats,
+            onDismiss = { showAcBreakdownDialog = false }
+        )
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceCard),
@@ -130,6 +145,7 @@ fun CharacterHeader(
                 HeaderStatItem(
                     label = "AC",
                     value = "${stats.armorClass}",
+                    onLongClick = { showAcBreakdownDialog = true },
                     modifier = Modifier.weight(1f)
                 )
                 HeaderStatItem(
@@ -298,17 +314,28 @@ fun CharacterHeader(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HeaderStatItem(
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null
 ) {
     Surface(
         color = SurfaceCardHighlight.copy(alpha = 0.6f),
         shape = RoundedCornerShape(8.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f)),
-        modifier = modifier
+        border = BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f)),
+        modifier = modifier.then(
+            if (onLongClick != null) {
+                Modifier.combinedClickable(
+                    onClick = {},
+                    onLongClick = onLongClick
+                )
+            } else {
+                Modifier
+            }
+        )
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

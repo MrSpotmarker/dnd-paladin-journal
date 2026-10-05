@@ -515,4 +515,43 @@ class CharacterStatsEngineTest {
         val toughChar = fixedChar.copy(feats = listOf("Tough"))
         assertEquals(31, CharacterStatsEngine.calculate(toughChar).maxHp)
     }
+
+    @Test
+    fun testArmorClassElementsBreakdown() {
+        val plate = Item(
+            id = "plate_1",
+            name = "Plattenpanzer",
+            type = ItemType.ARMOR,
+            armorType = ArmorType.HEAVY,
+            baseAc = 18,
+            isEquipped = true
+        )
+        val shield = Item(
+            id = "shield_1",
+            name = "Schild",
+            type = ItemType.SHIELD,
+            baseAc = 2,
+            isEquipped = true
+        )
+
+        val character = CharacterSheet(
+            level = 5,
+            inventory = listOf(plate, shield),
+            fightingStyle = "Defense",
+            activeBuffIds = setOf("shield_of_faith")
+        )
+
+        val stats = CharacterStatsEngine.calculate(character)
+
+        // 18 (Plate) + 2 (Shield) + 1 (Defense) + 2 (Shield of Faith) = 23
+        assertEquals(23, stats.armorClass)
+        assertEquals(4, stats.armorClassElements.size)
+
+        val names = stats.armorClassElements.map { it.name }
+        assertTrue(names.contains("Plattenpanzer"))
+        assertTrue(names.contains("Schild"))
+        assertTrue(names.any { it.contains("Defense") || it.contains("Verteidigung") })
+        assertTrue(names.any { it.contains("Shield of Faith") || it.contains("Glaubensschild") })
+    }
 }
+
