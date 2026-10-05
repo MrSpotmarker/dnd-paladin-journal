@@ -272,8 +272,9 @@ fun EditMoneyDialog(
 
                 // ---------------- SUMMARY & CONVERSION ----------------
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = DarkNavyBackground.copy(alpha = 0.6f)),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceCardHighlight),
                     shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

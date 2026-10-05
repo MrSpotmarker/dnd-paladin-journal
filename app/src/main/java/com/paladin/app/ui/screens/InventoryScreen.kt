@@ -99,8 +99,8 @@ fun InventoryScreen(
                     FilledTonalButton(
                         onClick = { showOnlineSearchDialog = true },
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = SmiteBlue.copy(alpha = 0.2f),
-                            contentColor = SmiteBlue
+                            containerColor = ChaunteaGreenContainer,
+                            contentColor = ChaunteaGreenBright
                         ),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                         shape = RoundedCornerShape(10.dp)
@@ -135,10 +135,11 @@ fun InventoryScreen(
 
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(PaladinGold.copy(alpha = 0.15f))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SurfaceCardHighlight.copy(alpha = 0.7f))
+                        .border(1.dp, BorderBrass.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                         .clickable { showEditMoneyDialog = true }
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
@@ -146,7 +147,7 @@ fun InventoryScreen(
                         text = "🪙 ${if (character.goldPieces % 1.0 == 0.0) character.goldPieces.toInt() else character.goldPieces} GP",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = PaladinGold
+                        color = PaladinGoldBright
                     )
                     Text("•", fontSize = 10.sp, color = TextSecondary)
                     Text(
@@ -160,7 +161,7 @@ fun InventoryScreen(
                         text = "🥉 ${character.copperPieces} CP",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = PaladinGoldBright
+                        color = OcherWarm
                     )
                     Text("✏️", fontSize = 10.sp)
                 }
@@ -189,15 +190,22 @@ fun InventoryScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             InventoryCategoryFilter.entries.forEach { filter ->
+                val isConsumable = filter == InventoryCategoryFilter.CONSUMABLES
                 FilterChip(
                     selected = selectedFilter == filter,
                     onClick = { selectedFilter = filter },
                     label = { Text("${filter.icon} ${filter.label}", fontSize = 12.sp) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = PaladinGold,
-                        selectedLabelColor = DarkNavyBackground,
+                        selectedContainerColor = if (isConsumable) ChaunteaGreen else PaladinGold,
+                        selectedLabelColor = if (isConsumable) androidx.compose.ui.graphics.Color.White else DarkNavyBackground,
                         containerColor = SurfaceCard,
                         labelColor = TextPrimary
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = selectedFilter == filter,
+                        borderColor = BorderDark,
+                        selectedBorderColor = if (isConsumable) ChaunteaGreenBright else PaladinGold
                     )
                 )
             }
@@ -293,7 +301,13 @@ fun InventoryItemRow(
             containerColor = if (item.isEquipped) SurfaceCardHighlight else SurfaceCard
         ),
         shape = RoundedCornerShape(12.dp),
-        border = if (item.isEquipped) androidx.compose.foundation.BorderStroke(1.dp, PaladinGold.copy(alpha = 0.5f)) else null
+        border = if (item.isEquipped) {
+            androidx.compose.foundation.BorderStroke(1.dp, PaladinGold.copy(alpha = 0.6f))
+        } else if (item.type.isConsumableOrPotion) {
+            androidx.compose.foundation.BorderStroke(1.dp, ChaunteaGreen.copy(alpha = 0.35f))
+        } else {
+            androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f))
+        }
     ) {
         Row(
             modifier = Modifier
@@ -312,13 +326,13 @@ fun InventoryItemRow(
                     )
                     if (item.quantity > 1) {
                         Surface(
-                            color = PaladinGold.copy(alpha = 0.15f),
+                            color = if (item.type.isConsumableOrPotion) ChaunteaGreenContainer else PaladinGold.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(4.dp),
                             modifier = Modifier.padding(start = 6.dp)
                         ) {
                             Text(
                                 text = "${item.quantity}x",
-                                color = PaladinGold,
+                                color = if (item.type.isConsumableOrPotion) ChaunteaGreenBright else PaladinGold,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp,
                                 modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)

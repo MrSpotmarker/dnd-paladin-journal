@@ -33,7 +33,11 @@ fun AbilityBox(
             onLongClick = onLongClick
         ),
         colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isProficientSave) BorderBrass.copy(alpha = 0.7f) else BorderDark.copy(alpha = 0.6f)
+        )
     ) {
         Column(
             modifier = Modifier.padding(8.dp),

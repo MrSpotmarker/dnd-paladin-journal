@@ -34,7 +34,7 @@ fun LayOnHandsCard(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceCard),
         shape = RoundedCornerShape(16.dp),
-        border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(BorderDark))
+        border = androidx.compose.foundation.BorderStroke(1.dp, ChaunteaGreen.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
@@ -117,7 +117,10 @@ fun LayOnHandsCard(
                         Button(
                             onClick = onCureCondition,
                             enabled = remaining >= 5,
-                            colors = ButtonDefaults.buttonColors(containerColor = LayOnHandsGreen),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = LayOnHandsGreen,
+                                contentColor = DarkNavyBackground
+                            ),
                             modifier = Modifier.weight(2f),
                             shape = RoundedCornerShape(8.dp)
                         ) {

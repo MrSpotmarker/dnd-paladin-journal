@@ -249,20 +249,21 @@ private fun ColumnScope.OnlineApiSearchContent(
     ) {
         OnlineSearchCategory.entries.forEach { cat ->
             val isSelected = selectedCategory == cat
+            val isConsumable = cat == OnlineSearchCategory.CONSUMABLES
             FilterChip(
                 selected = isSelected,
                 onClick = { onCategoryChange(cat) },
                 label = { Text("${cat.icon} ${cat.displayName}", fontSize = 11.sp) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = PaladinGold.copy(alpha = 0.25f),
-                    selectedLabelColor = PaladinGoldBright,
+                    selectedContainerColor = if (isConsumable) ChaunteaGreenContainer else PaladinGold.copy(alpha = 0.25f),
+                    selectedLabelColor = if (isConsumable) ChaunteaGreenBright else PaladinGoldBright,
                     containerColor = SurfaceCardHighlight,
                     labelColor = TextSecondary
                 ),
                 border = FilterChipDefaults.filterChipBorder(
                     enabled = true,
                     selected = isSelected,
-                    borderColor = if (isSelected) PaladinGold else BorderDark
+                    borderColor = if (isSelected) (if (isConsumable) ChaunteaGreenBright else PaladinGold) else BorderDark
                 )
             )
         }

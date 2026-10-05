@@ -91,8 +91,8 @@ fun SpellbookScreen(
                 FilledTonalButton(
                     onClick = { showOnlineSearchDialog = true },
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = SmiteBlue.copy(alpha = 0.2f),
-                        contentColor = SmiteBlue
+                        containerColor = ChaunteaGreenContainer,
+                        contentColor = ChaunteaGreenBright
                     ),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     shape = RoundedCornerShape(10.dp)
@@ -117,7 +117,8 @@ fun SpellbookScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, BorderBrass.copy(alpha = 0.4f))
         ) {
             Row(
                 modifier = Modifier
@@ -228,7 +229,11 @@ fun SpellCard(
             containerColor = if (isPrepared) SurfaceCardHighlight else SurfaceCard
         ),
         shape = RoundedCornerShape(12.dp),
-        border = if (isPrepared) androidx.compose.foundation.BorderStroke(1.dp, SpellSlotPurple.copy(alpha = 0.6f)) else null
+        border = if (isPrepared) {
+            androidx.compose.foundation.BorderStroke(1.dp, SpellSlotPurple.copy(alpha = 0.6f))
+        } else {
+            androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f))
+        }
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(

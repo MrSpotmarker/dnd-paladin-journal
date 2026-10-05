@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.paladin.app.data.CharacterRepository
@@ -18,9 +19,7 @@ import com.paladin.app.ui.CharacterViewModel
 import com.paladin.app.ui.components.DetailInfoDialog
 import com.paladin.app.ui.components.EditItemDialog
 import com.paladin.app.ui.screens.*
-import com.paladin.app.ui.theme.PaladinAppTheme
-import com.paladin.app.ui.theme.PaladinGold
-import com.paladin.app.ui.theme.SurfaceCard
+import com.paladin.app.ui.theme.*
 
 enum class AppTab(val title: String, val icon: ImageVector) {
     SHEET("Sheet", Icons.Default.Shield),
@@ -75,18 +74,30 @@ class MainActivity : ComponentActivity() {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         bottomBar = {
-                            NavigationBar(containerColor = SurfaceCard) {
+                            NavigationBar(
+                                containerColor = DarkNavyBackground,
+                                tonalElevation = 4.dp
+                            ) {
                                 AppTab.entries.forEach { tab ->
                                     NavigationBarItem(
                                         selected = selectedTab == tab,
                                         onClick = { selectedTab = tab },
                                         icon = { Icon(tab.icon, contentDescription = tab.title) },
-                                        label = { Text(tab.title, maxLines = 1, fontSize = 10.sp) },
+                                        label = { 
+                                            Text(
+                                                tab.title,
+                                                maxLines = 1,
+                                                fontSize = 10.sp,
+                                                fontWeight = if (selectedTab == tab) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                            ) 
+                                        },
                                         alwaysShowLabel = false,
                                         colors = NavigationBarItemDefaults.colors(
                                             selectedIconColor = PaladinGold,
                                             selectedTextColor = PaladinGold,
-                                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                            unselectedIconColor = TextSecondary,
+                                            unselectedTextColor = TextSecondary,
+                                            indicatorColor = ChaunteaGreenContainer
                                         )
                                     )
                                 }

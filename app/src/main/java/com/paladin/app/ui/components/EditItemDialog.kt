@@ -171,13 +171,14 @@ fun EditItemDialog(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             ItemType.entries.forEach { cat ->
+                                val isConsumable = cat.isConsumableOrPotion
                                 FilterChip(
                                     selected = type == cat,
                                     onClick = { type = cat },
                                     label = { Text("${cat.icon} ${cat.displayName}", fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = PaladinGold,
-                                        selectedLabelColor = DarkNavyBackground,
+                                        selectedContainerColor = if (isConsumable) ChaunteaGreen else PaladinGold,
+                                        selectedLabelColor = if (isConsumable) androidx.compose.ui.graphics.Color.White else DarkNavyBackground,
                                         containerColor = SurfaceCardHighlight,
                                         labelColor = TextPrimary
                                     )

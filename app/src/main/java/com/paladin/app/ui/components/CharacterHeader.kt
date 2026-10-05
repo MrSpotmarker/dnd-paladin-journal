@@ -34,7 +34,8 @@ fun CharacterHeader(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderBrass.copy(alpha = 0.4f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -242,8 +243,17 @@ fun CharacterHeader(
 
 @Composable
 fun HeaderStatItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Black, color = PaladinGold)
-        Text(text = label, fontSize = 11.sp, color = TextSecondary)
+    Surface(
+        color = SurfaceCardHighlight.copy(alpha = 0.6f),
+        shape = RoundedCornerShape(8.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f))
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+        ) {
+            Text(text = value, fontSize = 15.sp, fontWeight = FontWeight.Black, color = PaladinGold)
+            Text(text = label, fontSize = 10.sp, color = TextSecondary, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
