@@ -1,9 +1,11 @@
 package com.paladin.app.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -183,16 +185,22 @@ fun LevelUpScreen(
                     .filter { it.category == com.paladin.app.model.FeatCategory.FIGHTING_STYLE }
                     .forEach { feat ->
                         val isChecked = selectedFeats.any { it.equals(feat.name, ignoreCase = true) }
+                        @OptIn(ExperimentalFoundationApi::class)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    selectedFeats = if (isChecked) {
-                                        selectedFeats.filterNot { it.equals(feat.name, ignoreCase = true) }.toSet()
-                                    } else {
-                                        selectedFeats + feat.name
+                                .combinedClickable(
+                                    onClick = {
+                                        selectedFeats = if (isChecked) {
+                                            selectedFeats.filterNot { it.equals(feat.name, ignoreCase = true) }.toSet()
+                                        } else {
+                                            selectedFeats + feat.name
+                                        }
+                                    },
+                                    onLongClick = {
+                                        viewModel.showDetail(com.paladin.app.model.DetailItem.FeatInfo(feat))
                                     }
-                                }
+                                )
                                 .padding(vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -227,16 +235,22 @@ fun LevelUpScreen(
                     .filter { it.category == com.paladin.app.model.FeatCategory.ORIGIN }
                     .forEach { feat ->
                         val isChecked = selectedFeats.any { it.equals(feat.name, ignoreCase = true) }
+                        @OptIn(ExperimentalFoundationApi::class)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    selectedFeats = if (isChecked) {
-                                        selectedFeats.filterNot { it.equals(feat.name, ignoreCase = true) }.toSet()
-                                    } else {
-                                        selectedFeats + feat.name
+                                .combinedClickable(
+                                    onClick = {
+                                        selectedFeats = if (isChecked) {
+                                            selectedFeats.filterNot { it.equals(feat.name, ignoreCase = true) }.toSet()
+                                        } else {
+                                            selectedFeats + feat.name
+                                        }
+                                    },
+                                    onLongClick = {
+                                        viewModel.showDetail(com.paladin.app.model.DetailItem.FeatInfo(feat))
                                     }
-                                }
+                                )
                                 .padding(vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {

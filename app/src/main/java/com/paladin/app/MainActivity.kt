@@ -15,14 +15,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.paladin.app.data.CharacterRepository
 import com.paladin.app.ui.CharacterViewModel
+import com.paladin.app.ui.components.DetailInfoDialog
 import com.paladin.app.ui.screens.*
 import com.paladin.app.ui.theme.PaladinAppTheme
 import com.paladin.app.ui.theme.PaladinGold
 import com.paladin.app.ui.theme.SurfaceCard
 
 enum class AppTab(val title: String, val icon: ImageVector) {
-    COMBAT("Bogen", Icons.Default.Shield),
-    WEAPONS("Waffen", Icons.Default.Gavel),
+    SHEET("Sheet", Icons.Default.Shield),
     SPELLS("Zauber", Icons.Default.AutoStories),
     INVENTORY("Inventar", Icons.Default.Backpack),
     JOURNAL("Tagebuch", Icons.Default.Book),
@@ -39,7 +39,15 @@ class MainActivity : ComponentActivity() {
             PaladinAppTheme {
                 val viewModel = remember { CharacterViewModel(repository) }
                 val character by viewModel.character.collectAsState()
-                var selectedTab by remember { mutableStateOf(AppTab.COMBAT) }
+                val activeDetail by viewModel.activeDetail.collectAsState()
+                var selectedTab by remember { mutableStateOf(AppTab.SHEET) }
+
+                activeDetail?.let { detailItem ->
+                    DetailInfoDialog(
+                        item = detailItem,
+                        onDismiss = viewModel::dismissDetail
+                    )
+                }
 
                 if (!character.hasCompletedCreation) {
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -68,11 +76,7 @@ class MainActivity : ComponentActivity() {
                         }
                     ) { innerPadding ->
                         when (selectedTab) {
-                            AppTab.COMBAT -> CombatDashboardScreen(
-                                viewModel = viewModel,
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                            AppTab.WEAPONS -> WeaponsScreen(
+                            AppTab.SHEET -> CombatDashboardScreen(
                                 viewModel = viewModel,
                                 modifier = Modifier.padding(innerPadding)
                             )

@@ -6,8 +6,10 @@ import com.paladin.app.data.CharacterRepository
 import com.paladin.app.engine.CharacterStatsEngine
 import com.paladin.app.engine.RestService
 import com.paladin.app.model.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -25,6 +27,17 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
 
     val srdSpells: StateFlow<List<Spell>> = repository.srdSpells
     val srdItems: StateFlow<List<Item>> = repository.srdItems
+
+    private val _activeDetail = MutableStateFlow<DetailItem?>(null)
+    val activeDetail: StateFlow<DetailItem?> = _activeDetail.asStateFlow()
+
+    fun showDetail(item: DetailItem) {
+        _activeDetail.value = item
+    }
+
+    fun dismissDetail() {
+        _activeDetail.value = null
+    }
 
     fun takeDamage(amount: Int) {
         val updated = RestService.applyDamage(character.value, amount)

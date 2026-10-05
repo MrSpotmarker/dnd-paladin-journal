@@ -1,8 +1,10 @@
 package com.paladin.app.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paladin.app.model.DetailItem
 import com.paladin.app.model.Item
 import com.paladin.app.model.ItemType
 import com.paladin.app.ui.CharacterViewModel
@@ -93,7 +96,8 @@ fun InventoryScreen(
                     item = item,
                     onToggleEquip = { viewModel.toggleEquipItem(item.id) },
                     onToggleAttune = { viewModel.toggleAttuneItem(item.id) },
-                    onDelete = { viewModel.removeItem(item.id) }
+                    onDelete = { viewModel.removeItem(item.id) },
+                    onShowDetail = { viewModel.showDetail(DetailItem.ItemInfo(item)) }
                 )
             }
         }
@@ -111,15 +115,22 @@ fun InventoryScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InventoryItemRow(
     item: Item,
     onToggleEquip: () -> Unit,
     onToggleAttune: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShowDetail: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onShowDetail,
+                onLongClick = onShowDetail
+            ),
         colors = CardDefaults.cardColors(
             containerColor = if (item.isEquipped) SurfaceCardHighlight else SurfaceCard
         ),

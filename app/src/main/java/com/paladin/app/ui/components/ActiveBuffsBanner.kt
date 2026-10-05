@@ -1,7 +1,9 @@
 package com.paladin.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,10 +19,12 @@ import androidx.compose.ui.unit.sp
 import com.paladin.app.model.ActiveBuffInfo
 import com.paladin.app.ui.theme.*
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ActiveBuffsBanner(
     activeBuffs: List<ActiveBuffInfo>,
     onDismissBuff: (String) -> Unit,
+    onShowDetail: (ActiveBuffInfo) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (activeBuffs.isEmpty()) return
@@ -85,7 +89,14 @@ fun ActiveBuffsBanner(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(6.dp))
+                                .combinedClickable(
+                                    onClick = { onShowDetail(buff) },
+                                    onLongClick = { onShowDetail(buff) }
+                                )
+                                .padding(end = 4.dp)
                         ) {
                             Text(buff.icon, fontSize = 16.sp)
                             Column {
@@ -109,7 +120,7 @@ fun ActiveBuffsBanner(
                                     }
                                 }
                                 Text(
-                                    text = buff.effectSummary,
+                                    text = "${buff.effectSummary} • Info antippen",
                                     fontSize = 11.sp,
                                     color = PaladinGold
                                 )

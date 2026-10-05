@@ -1,9 +1,11 @@
 package com.paladin.app.ui.components
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paladin.app.model.DetailItem
 import com.paladin.app.model.Spell
 import com.paladin.app.model.SpellSlotState
 import com.paladin.app.ui.theme.*
@@ -35,6 +38,7 @@ fun SpellsAndSlotsSection(
     onOpenSelectDialog: () -> Unit,
     onToggleBuff: (buffId: String, isConcentration: Boolean, consumeSlot: Boolean) -> Unit,
     onCastInstant: (spellId: String) -> Unit,
+    onShowDetail: (DetailItem) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val hasAvailableSlots = spellSlots.any { it.remainingSlots > 0 }
@@ -203,7 +207,8 @@ fun SpellsAndSlotsSection(
                                 onToggleBuff = { consumeSlot ->
                                     onToggleBuff(spell.id, spell.isConcentration, consumeSlot)
                                 },
-                                onCastInstant = { onCastInstant(spell.id) }
+                                onCastInstant = { onCastInstant(spell.id) },
+                                onShowDetail = { onShowDetail(DetailItem.SpellInfo(spell)) }
                             )
                         }
                     }
@@ -213,6 +218,7 @@ fun SpellsAndSlotsSection(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PreparedSpellCombatRow(
     spell: Spell,
@@ -220,7 +226,8 @@ fun PreparedSpellCombatRow(
     hasAvailableSlots: Boolean,
     chaMod: Int,
     onToggleBuff: (consumeSlot: Boolean) -> Unit,
-    onCastInstant: () -> Unit
+    onCastInstant: () -> Unit,
+    onShowDetail: () -> Unit = {}
 ) {
     val isBuffOrConcentration = spell.isConcentration || spell.id in setOf(
         "srd_shield_of_faith", "srd_bless", "srd_divine_favor",
@@ -263,11 +270,14 @@ fun PreparedSpellCombatRow(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left: Spell Details
+                // Left: Spell Details (Click = Expand/Collapse, Long Click = Full Details)
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { isExpanded = !isExpanded }
+                        .combinedClickable(
+                            onClick = { isExpanded = !isExpanded },
+                            onLongClick = onShowDetail
+                        )
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -371,6 +381,21 @@ fun PreparedSpellCombatRow(
                         fontSize = 11.sp,
                         color = TextPrimary.copy(alpha = 0.9f)
                     )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp)
+                            .clickable { onShowDetail() },
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📖 Details & Regeln (oder lange drücken) ➔",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = PaladinGold
+                        )
+                    }
                 }
             }
         }

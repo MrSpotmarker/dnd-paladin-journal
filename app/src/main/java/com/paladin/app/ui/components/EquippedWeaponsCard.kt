@@ -1,8 +1,10 @@
 package com.paladin.app.ui.components
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,11 +18,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paladin.app.model.AttackInfo
+import com.paladin.app.model.DetailItem
 import com.paladin.app.ui.theme.*
 
 @Composable
 fun EquippedWeaponsCard(
     attacks: List<AttackInfo>,
+    onShowDetail: (DetailItem) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -70,7 +74,10 @@ fun EquippedWeaponsCard(
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     attacks.forEach { attack ->
-                        EquippedWeaponRow(attack = attack)
+                        EquippedWeaponRow(
+                            attack = attack,
+                            onShowDetail = { onShowDetail(DetailItem.ItemInfo(attack.item)) }
+                        )
                     }
                 }
             }
@@ -78,14 +85,21 @@ fun EquippedWeaponsCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun EquippedWeaponRow(attack: AttackInfo) {
+fun EquippedWeaponRow(
+    attack: AttackInfo,
+    onShowDetail: () -> Unit = {}
+) {
     var isExpanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { isExpanded = !isExpanded },
+            .combinedClickable(
+                onClick = { isExpanded = !isExpanded },
+                onLongClick = onShowDetail
+            ),
         colors = CardDefaults.cardColors(containerColor = SurfaceCardHighlight),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -268,6 +282,22 @@ fun EquippedWeaponRow(attack: AttackInfo) {
                         fontSize = 10.sp,
                         color = TextSecondary.copy(alpha = 0.8f)
                     )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp)
+                            .clickable { onShowDetail() },
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "⚔️ Waffendetails & Meisterschaft (oder lange drücken) ➔",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = PaladinGold
+                        )
+                    }
                 }
             }
         }

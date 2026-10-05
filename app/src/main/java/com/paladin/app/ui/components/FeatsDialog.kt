@@ -1,8 +1,10 @@
 package com.paladin.app.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.paladin.app.model.DetailItem
 import com.paladin.app.model.FeatCatalog
 import com.paladin.app.model.FeatCategory
 import com.paladin.app.ui.theme.*
@@ -30,7 +33,8 @@ fun FeatsDialog(
     characterLevel: Int,
     currentFeats: List<String>,
     onDismiss: () -> Unit,
-    onSave: (List<String>) -> Unit
+    onSave: (List<String>) -> Unit,
+    onShowDetail: (DetailItem) -> Unit = {}
 ) {
     var selectedFeats by remember { mutableStateOf(currentFeats.toSet()) }
     var customFeatInput by remember { mutableStateOf("") }
@@ -157,7 +161,8 @@ fun FeatsDialog(
                                 } else {
                                     selectedFeats + feat.name
                                 }
-                            }
+                            },
+                            onShowDetail = { onShowDetail(DetailItem.FeatInfo(feat)) }
                         )
                     }
 
@@ -183,7 +188,8 @@ fun FeatsDialog(
                                 } else {
                                     selectedFeats + feat.name
                                 }
-                            }
+                            },
+                            onShowDetail = { onShowDetail(DetailItem.FeatInfo(feat)) }
                         )
                     }
 
@@ -270,18 +276,23 @@ fun FeatsDialog(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FeatSelectionRow(
     name: String,
     desc: String,
     benefit: String,
     isChecked: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    onShowDetail: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onToggle() }
+            .combinedClickable(
+                onClick = onToggle,
+                onLongClick = onShowDetail
+            )
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.Top
     ) {

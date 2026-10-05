@@ -1,7 +1,9 @@
 package com.paladin.app.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.paladin.app.model.DetailItem
 import com.paladin.app.model.Spell
 import com.paladin.app.ui.theme.*
 
@@ -26,7 +29,8 @@ fun PreparedSpellsDialog(
     maxPreparedAllowed: Int,
     characterLevel: Int,
     onDismiss: () -> Unit,
-    onSave: (Set<String>) -> Unit
+    onSave: (Set<String>) -> Unit,
+    onShowDetail: (DetailItem) -> Unit = {}
 ) {
     var selectedIds by remember { mutableStateOf(currentPreparedIds) }
     var selectedLevelFilter by remember { mutableStateOf<Int?>(null) }
@@ -136,16 +140,20 @@ fun PreparedSpellsDialog(
                 ) {
                     items(filteredSpells, key = { it.id }) { spell ->
                         val isSelected = spell.id in selectedIds
+                        @OptIn(ExperimentalFoundationApi::class)
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    selectedIds = if (isSelected) {
-                                        selectedIds - spell.id
-                                    } else {
-                                        selectedIds + spell.id
-                                    }
-                                },
+                                .combinedClickable(
+                                    onClick = {
+                                        selectedIds = if (isSelected) {
+                                            selectedIds - spell.id
+                                        } else {
+                                            selectedIds + spell.id
+                                        }
+                                    },
+                                    onLongClick = { onShowDetail(DetailItem.SpellInfo(spell)) }
+                                ),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isSelected) SurfaceCardHighlight else SurfaceCard
                             ),

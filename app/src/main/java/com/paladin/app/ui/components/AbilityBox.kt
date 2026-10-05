@@ -1,5 +1,7 @@
 package com.paladin.app.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -12,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import com.paladin.app.model.Ability
 import com.paladin.app.ui.theme.*
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AbilityBox(
     ability: Ability,
@@ -20,10 +23,15 @@ fun AbilityBox(
     save: Int,
     isProficientSave: Boolean,
     hasAura: Boolean,
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.combinedClickable(
+            onClick = onClick,
+            onLongClick = onLongClick
+        ),
         colors = CardDefaults.cardColors(containerColor = SurfaceCard),
         shape = RoundedCornerShape(12.dp)
     ) {

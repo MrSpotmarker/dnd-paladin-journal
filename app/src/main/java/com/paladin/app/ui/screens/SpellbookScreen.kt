@@ -1,9 +1,11 @@
 package com.paladin.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paladin.app.model.DetailItem
 import com.paladin.app.model.Spell
 import com.paladin.app.model.SpellSchool
 import com.paladin.app.ui.CharacterViewModel
@@ -149,7 +152,8 @@ fun SpellbookScreen(
                 SpellCard(
                     spell = spell,
                     isPrepared = isPrepared,
-                    onTogglePrepared = { viewModel.togglePrepareSpell(spell.id) }
+                    onTogglePrepared = { viewModel.togglePrepareSpell(spell.id) },
+                    onShowDetail = { viewModel.showDetail(DetailItem.SpellInfo(spell)) }
                 )
             }
         }
@@ -166,18 +170,23 @@ fun SpellbookScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SpellCard(
     spell: Spell,
     isPrepared: Boolean,
-    onTogglePrepared: () -> Unit
+    onTogglePrepared: () -> Unit,
+    onShowDetail: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded },
+            .combinedClickable(
+                onClick = { expanded = !expanded },
+                onLongClick = onShowDetail
+            ),
         colors = CardDefaults.cardColors(
             containerColor = if (isPrepared) SurfaceCardHighlight else SurfaceCard
         ),
@@ -243,6 +252,22 @@ fun SpellCard(
                         lineHeight = 16.sp,
                         modifier = Modifier.padding(top = 4.dp)
                     )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp)
+                            .clickable { onShowDetail() },
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "✨ Vollständige Zauberdetails (oder lange drücken) ➔",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = PaladinGold
+                        )
+                    }
                 }
             }
         }

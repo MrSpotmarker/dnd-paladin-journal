@@ -1,9 +1,11 @@
 package com.paladin.app.ui.components
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,9 +21,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paladin.app.model.ChannelDivinityDetails
+import com.paladin.app.model.DetailItem
 import com.paladin.app.ui.theme.*
 import kotlin.math.max
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChannelDivinityCard(
     remaining: Int,
@@ -34,6 +39,7 @@ fun ChannelDivinityCard(
     onRestore: () -> Unit,
     onToggleBuff: (buffId: String, consumesCharge: Boolean) -> Unit,
     onHarnessDivinePower: () -> Unit,
+    onShowDetail: (DetailItem) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isSacredWeaponActive = activeBuffIds.any { it.equals("sacred_weapon", ignoreCase = true) }
@@ -61,18 +67,37 @@ fun ChannelDivinityCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { isExpanded = !isExpanded }
+                        .clip(RoundedCornerShape(8.dp))
+                        .combinedClickable(
+                            onClick = { isExpanded = !isExpanded },
+                            onLongClick = {
+                                onShowDetail(ChannelDivinityDetails.getGeneralChannelDivinityDetail(oath, maxUses, chaMod))
+                            }
+                        )
                 ) {
                     Text("⚡", fontSize = 16.sp)
                     Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "Göttliche Macht (Channel Divinity)",
+                                fontWeight = FontWeight.Bold,
+                                color = SmiteBlue,
+                                fontSize = 14.sp
+                            )
+                            IconButton(
+                                onClick = {
+                                    onShowDetail(ChannelDivinityDetails.getGeneralChannelDivinityDetail(oath, maxUses, chaMod))
+                                },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Text("ℹ️", fontSize = 11.sp)
+                            }
+                        }
                         Text(
-                            text = "Göttliche Macht (Channel Divinity)",
-                            fontWeight = FontWeight.Bold,
-                            color = SmiteBlue,
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            text = "Regeneriert 1 Ladung bei Kurzer Rast",
+                            text = "Regeneriert 1 Ladung bei Kurzer Rast • Details lange drücken",
                             fontSize = 11.sp,
                             color = TextSecondary
                         )
@@ -131,15 +156,30 @@ fun ChannelDivinityCard(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .combinedClickable(
+                                        onClick = { onShowDetail(ChannelDivinityDetails.getSacredWeaponDetail(chaMod)) },
+                                        onLongClick = { onShowDetail(ChannelDivinityDetails.getSacredWeaponDetail(chaMod)) }
+                                    )
+                                    .padding(end = 8.dp, top = 2.dp, bottom = 2.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = "🌟 Heilige Waffe (Sacred Weapon)",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSacredWeaponActive) PaladinGoldBright else TextPrimary
+                                    )
+                                    Text("ℹ️", fontSize = 10.sp)
+                                }
                                 Text(
-                                    text = "🌟 Heilige Waffe (Sacred Weapon)",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSacredWeaponActive) PaladinGoldBright else TextPrimary
-                                )
-                                Text(
-                                    text = "+$sacredBonus auf Waffen-Angriffe für 10 Min.",
+                                    text = "+$sacredBonus auf Waffen-Angriffe für 10 Min. (Info antippen)",
                                     fontSize = 10.sp,
                                     color = if (isSacredWeaponActive) PaladinGold else TextSecondary
                                 )
@@ -187,15 +227,30 @@ fun ChannelDivinityCard(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .combinedClickable(
+                                        onClick = { onShowDetail(ChannelDivinityDetails.getVowOfEnmityDetail()) },
+                                        onLongClick = { onShowDetail(ChannelDivinityDetails.getVowOfEnmityDetail()) }
+                                    )
+                                    .padding(end = 8.dp, top = 2.dp, bottom = 2.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = "🎯 Gelübde der Feindschaft (Vow of Enmity)",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isVowOfEnmityActive) PaladinGoldBright else TextPrimary
+                                    )
+                                    Text("ℹ️", fontSize = 10.sp)
+                                }
                                 Text(
-                                    text = "🎯 Gelübde der Feindschaft (Vow of Enmity)",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isVowOfEnmityActive) PaladinGoldBright else TextPrimary
-                                )
-                                Text(
-                                    text = "Vorteil auf Angriffe gegen Ziel (1 Min.)",
+                                    text = "Vorteil auf Angriffe gegen Ziel (1 Min. • Info antippen)",
                                     fontSize = 10.sp,
                                     color = if (isVowOfEnmityActive) PaladinGold else TextSecondary
                                 )
@@ -232,6 +287,59 @@ fun ChannelDivinityCard(
                         }
                     }
 
+                    // Turn the Unholy (Devotion)
+                    if (hasDevotion) {
+                        val turnDc = 8 + 2 + chaMod
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(SurfaceCardHighlight)
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .combinedClickable(
+                                        onClick = { onShowDetail(ChannelDivinityDetails.getTurnTheUnholyDetail(turnDc)) },
+                                        onLongClick = { onShowDetail(ChannelDivinityDetails.getTurnTheUnholyDetail(turnDc)) }
+                                    )
+                                    .padding(end = 8.dp, top = 2.dp, bottom = 2.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = "☀️ Untote vertreiben (Turn the Unholy)",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                    Text("ℹ️", fontSize = 10.sp)
+                                }
+                                Text(
+                                    text = "Aktion • Untote/Unholde fliehen 1 Min. (DC $turnDc)",
+                                    fontSize = 10.sp,
+                                    color = TextSecondary
+                                )
+                            }
+
+                            FilledTonalButton(
+                                onClick = onUse,
+                                enabled = remaining > 0,
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                modifier = Modifier.height(28.dp),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text("Wirken", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
                     // Harness Divine Power (2024 optional/standard rule)
                     Row(
                         modifier = Modifier
@@ -242,15 +350,30 @@ fun ChannelDivinityCard(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(6.dp))
+                                .combinedClickable(
+                                    onClick = { onShowDetail(ChannelDivinityDetails.getHarnessDivinePowerDetail()) },
+                                    onLongClick = { onShowDetail(ChannelDivinityDetails.getHarnessDivinePowerDetail()) }
+                                )
+                                .padding(end = 8.dp, top = 2.dp, bottom = 2.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "⚡ Göttliche Kraft bündeln",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text("ℹ️", fontSize = 10.sp)
+                            }
                             Text(
-                                text = "⚡ Göttliche Kraft bündeln",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = "Regeneriert 1 verbrauchten Zauberslot",
+                                text = "Regeneriert 1 verbrauchten Zauberslot (Info antippen)",
                                 fontSize = 10.sp,
                                 color = TextSecondary
                             )
@@ -265,6 +388,26 @@ fun ChannelDivinityCard(
                         ) {
                             Text("+1 Slot", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
+                    }
+
+                    // Full Details link row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable {
+                                onShowDetail(ChannelDivinityDetails.getGeneralChannelDivinityDetail(oath, maxUses, chaMod))
+                            }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📖 Vollständige Channel Divinity Regeln & Details ➔",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = SmiteBlue
+                        )
                     }
                 }
             }

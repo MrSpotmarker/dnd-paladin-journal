@@ -24,7 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paladin.app.model.Ability
 import com.paladin.app.model.CalculatedStats
+import com.paladin.app.model.ChannelDivinityDetails
 import com.paladin.app.model.CharacterSheet
+import com.paladin.app.model.DetailItem
 import com.paladin.app.model.Skill
 import com.paladin.app.ui.CharacterViewModel
 import com.paladin.app.ui.components.*
@@ -74,7 +76,30 @@ fun CombatDashboardScreen(
         if (stats.activeBuffs.isNotEmpty()) {
             ActiveBuffsBanner(
                 activeBuffs = stats.activeBuffs,
-                onDismissBuff = { viewModel.deactivateBuff(it) }
+                onDismissBuff = { viewModel.deactivateBuff(it) },
+                onShowDetail = { buff ->
+                    val spell = allSpells.find { it.id.equals(buff.id, ignoreCase = true) }
+                    if (spell != null) {
+                        viewModel.showDetail(DetailItem.SpellInfo(spell))
+                    } else {
+                        when (buff.id) {
+                            "sacred_weapon" -> viewModel.showDetail(ChannelDivinityDetails.getSacredWeaponDetail(chaMod))
+                            "vow_of_enmity" -> viewModel.showDetail(ChannelDivinityDetails.getVowOfEnmityDetail())
+                            "divine_sense" -> viewModel.showDetail(ChannelDivinityDetails.getDivineSenseDetail())
+                            else -> {
+                                viewModel.showDetail(
+                                    DetailItem.FeatureInfo(
+                                        title = buff.name,
+                                        subtitle = "Aktiver Effekt",
+                                        icon = buff.icon,
+                                        description = buff.effectSummary,
+                                        mechanicalBenefits = listOf(buff.effectSummary)
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
             )
         }
 
@@ -90,7 +115,8 @@ fun CombatDashboardScreen(
 
         // Equipped Weapons & Attacks Card
         EquippedWeaponsCard(
-            attacks = stats.attacks
+            attacks = stats.attacks,
+            onShowDetail = { viewModel.showDetail(it) }
         )
 
         // Unified Spells & Spell Slots Section
@@ -109,7 +135,8 @@ fun CombatDashboardScreen(
             },
             onCastInstant = { spellId ->
                 viewModel.castInstantSpell(spellId, 1)
-            }
+            },
+            onShowDetail = { viewModel.showDetail(it) }
         )
 
         // Channel Divinity (Level 3+)
@@ -133,7 +160,8 @@ fun CombatDashboardScreen(
                 },
                 onHarnessDivinePower = {
                     viewModel.harnessDivinePower(1)
-                }
+                },
+                onShowDetail = { viewModel.showDetail(it) }
             )
         }
 
@@ -142,7 +170,28 @@ fun CombatDashboardScreen(
             remaining = stats.remainingLayOnHands,
             maxPool = stats.maxLayOnHands,
             onUse = { viewModel.useLayOnHands(it) },
-            onCureCondition = { viewModel.cureConditionLayOnHands() }
+            onCureCondition = { viewModel.cureConditionLayOnHands() },
+            onShowDetail = {
+                viewModel.showDetail(
+                    DetailItem.FeatureInfo(
+                        title = "Handauflegen (Lay on Hands)",
+                        subtitle = "Klassenmerkmal Paladin (Stufe 1)",
+                        badge = "Bonus-Aktion",
+                        icon = "💚",
+                        keyProperties = listOf(
+                            "Aktionstyp" to "Bonus-Aktion (D&D 2024)",
+                            "Reichweite" to "Berührung",
+                            "Pool-Größe" to "${stats.maxLayOnHands} HP (5 x Stufe ${character.level})",
+                            "Erholung" to "Lange Rast"
+                        ),
+                        mechanicalBenefits = listOf(
+                            "Heilung: Beliebige Anzahl Trefferpunkte aus deinem Pool (aktuell noch ${stats.remainingLayOnHands} HP) auf eine berührte Kreatur übertragen.",
+                            "Vergiftung heilen: 5 Trefferpunkte aus dem Pool aufwenden, um den Zustand 'Vergiftet' (Poisoned) bei einer Kreatur zu heilen."
+                        ),
+                        description = "Deine gesegnete Berührung lindert Wunden und vertreibt Gifte. In den D&D 2024 Regeln wird Handauflegen als Bonus-Aktion ausgeführt, sodass du im selben Zug noch mit deiner Waffe angreifen oder einen Zauber wirken kannst!"
+                    )
+                )
+            }
         )
 
         // Ability Scores & Saves Header with Edit & Expand buttons
@@ -221,13 +270,30 @@ fun CombatDashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Ability.entries.forEach { ability ->
+                val score = stats.effectiveAbilities.getScore(ability)
+                val mod = stats.modifiers[ability] ?: 0
+                val save = stats.savingThrows[ability] ?: 0
+                val isProf = ability in stats.savingThrowProficiencies
+                val showDetailAction = {
+                    viewModel.showDetail(
+                        DetailItem.AbilityInfo(
+                            ability = ability,
+                            score = score,
+                            modifier = mod,
+                            isSaveProficient = isProf,
+                            saveBonus = save
+                        )
+                    )
+                }
                 AbilityBox(
                     ability = ability,
-                    score = stats.effectiveAbilities.getScore(ability),
-                    mod = stats.modifiers[ability] ?: 0,
-                    save = stats.savingThrows[ability] ?: 0,
-                    isProficientSave = ability in stats.savingThrowProficiencies,
+                    score = score,
+                    mod = mod,
+                    save = save,
+                    isProficientSave = isProf,
                     hasAura = stats.hasAuraOfProtection,
+                    onClick = showDetailAction,
+                    onLongClick = showDetailAction,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -309,7 +375,8 @@ fun CombatDashboardScreen(
             onSave = { updatedFeats ->
                 viewModel.updateFeats(updatedFeats)
                 showFeatsDialog = false
-            }
+            },
+            onShowDetail = { viewModel.showDetail(it) }
         )
     }
 
@@ -334,7 +401,8 @@ fun CombatDashboardScreen(
             onSave = { updatedPreparedIds ->
                 viewModel.setPreparedSpells(updatedPreparedIds)
                 showPreparedSpellsDialog = false
-            }
+            },
+            onShowDetail = { viewModel.showDetail(it) }
         )
     }
 }
