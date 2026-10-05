@@ -99,15 +99,31 @@ fun CharacterHeader(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Quick Stats Row: AC, PB, Speed (Bewegungsreichweite), Hit Dice
+            // Quick Stats Row: AC, PB, Speed (Bewegungsreichweite), Hit Dice (gleichmäßig verteilt)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                HeaderStatItem(label = "AC", value = "${stats.armorClass}")
-                HeaderStatItem(label = "PB", value = "+${stats.proficiencyBonus}")
-                HeaderStatItem(label = "Bewegung", value = "${stats.speedFt} ft")
-                HeaderStatItem(label = "Trefferwürfel", value = "${stats.remainingHitDice}/${stats.maxHitDice} d10")
+                HeaderStatItem(
+                    label = "AC",
+                    value = "${stats.armorClass}",
+                    modifier = Modifier.weight(1f)
+                )
+                HeaderStatItem(
+                    label = "PB",
+                    value = "+${stats.proficiencyBonus}",
+                    modifier = Modifier.weight(1f)
+                )
+                HeaderStatItem(
+                    label = "Bewegung",
+                    value = "${stats.speedFt} ft",
+                    modifier = Modifier.weight(1f)
+                )
+                HeaderStatItem(
+                    label = "Trefferwürfel",
+                    value = "${stats.remainingHitDice}/${stats.maxHitDice} d10",
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -260,18 +276,37 @@ fun CharacterHeader(
 }
 
 @Composable
-fun HeaderStatItem(label: String, value: String) {
+fun HeaderStatItem(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
     Surface(
         color = SurfaceCardHighlight.copy(alpha = 0.6f),
         shape = RoundedCornerShape(8.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f))
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f)),
+        modifier = modifier
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 2.dp, vertical = 6.dp)
         ) {
-            Text(text = value, fontSize = 15.sp, fontWeight = FontWeight.Black, color = PaladinGold)
-            Text(text = label, fontSize = 10.sp, color = TextSecondary, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = value,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Black,
+                color = PaladinGold,
+                maxLines = 1
+            )
+            Text(
+                text = label,
+                fontSize = 9.5.sp,
+                color = TextSecondary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
         }
     }
 }

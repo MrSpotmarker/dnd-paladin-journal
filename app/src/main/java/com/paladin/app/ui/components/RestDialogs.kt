@@ -10,18 +10,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paladin.app.ui.theme.*
-import kotlin.random.Random
 
 @Composable
 fun ShortRestDialog(
     remainingHitDice: Int,
     conMod: Int,
     onDismiss: () -> Unit,
-    onConfirm: (diceSpent: Int, hpHealed: Int) -> Unit
+    onConfirm: (diceSpent: Int) -> Unit
 ) {
     var diceToSpend by remember { mutableIntStateOf(if (remainingHitDice > 0) 1 else 0) }
-    var manualHpHealed by remember { mutableStateOf("") }
-    var rolledDiceHp by remember { mutableIntStateOf(0) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -35,7 +32,7 @@ fun ShortRestDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Trefferwürfel verfügbar: $remainingHitDice d10",
+                    text = "Verfügbare Trefferwürfel: $remainingHitDice d10",
                     fontSize = 14.sp,
                     color = TextPrimary
                 )
@@ -46,11 +43,11 @@ fun ShortRestDialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Würfel ausgeben: $diceToSpend", color = TextPrimary)
+                        Text(text = "Würfel verbrauchen: $diceToSpend", color = TextPrimary, fontWeight = FontWeight.SemiBold)
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             FilledTonalButton(
-                                onClick = { if (diceToSpend > 1) diceToSpend-- },
-                                enabled = diceToSpend > 1,
+                                onClick = { if (diceToSpend > 0) diceToSpend-- },
+                                enabled = diceToSpend > 0,
                                 contentPadding = PaddingValues(horizontal = 8.dp)
                             ) { Text("-") }
                             FilledTonalButton(
@@ -61,31 +58,44 @@ fun ShortRestDialog(
                         }
                     }
 
-                    Button(
-                        onClick = {
-                            var sum = 0
-                            repeat(diceToSpend) {
-                                sum += Random.nextInt(1, 11) + conMod
-                            }
-                            rolledDiceHp = sum.coerceAtLeast(1)
-                            manualHpHealed = rolledDiceHp.toString()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = PaladinGold, contentColor = DarkNavyBackground),
+                    // 🛡️ CON Bonus Info
+                    val conSign = if (conMod >= 0) "+$conMod" else "$conMod"
+                    val totalCon = diceToSpend * conMod
+                    val totalConSign = if (totalCon >= 0) "+$totalCon" else "$totalCon"
+
+                    Surface(
+                        color = SurfaceCardHighlight.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("🎲 $diceToSpend d10 + ${diceToSpend * conMod} CON würfeln")
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("🛡️", fontSize = 16.sp)
+                            Column {
+                                Text(
+                                    text = "Konstitutions-Bonus: $conSign HP pro Würfel",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PaladinGold
+                                )
+                                if (diceToSpend > 0) {
+                                    Text(
+                                        text = "Formel am Tisch: $diceToSpend d10 $totalConSign HP",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                            }
+                        }
                     }
-
-                    OutlinedTextField(
-                        value = manualHpHealed,
-                        onValueChange = { manualHpHealed = it },
-                        label = { Text("Erhaltende Heilung (HP)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 } else {
                     Text(
-                        text = "Keine Trefferwürfel mehr vorhanden!",
-                        color = HealthRed,
+                        text = "Keine Trefferwürfel mehr vorhanden (0 d10).",
+                        color = TextSecondary,
                         fontSize = 13.sp
                     )
                 }
@@ -107,8 +117,7 @@ fun ShortRestDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val hp = manualHpHealed.toIntOrNull() ?: rolledDiceHp
-                    onConfirm(diceToSpend, hp)
+                    onConfirm(diceToSpend)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = LayOnHandsGreen)
             ) {

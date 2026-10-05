@@ -415,8 +415,8 @@ fun CombatDashboardScreen(
             remainingHitDice = stats.remainingHitDice,
             conMod = conMod,
             onDismiss = { showShortRestDialog = false },
-            onConfirm = { diceSpent, hpHealed ->
-                viewModel.performShortRest(diceSpent, hpHealed)
+            onConfirm = { diceSpent ->
+                viewModel.performShortRest(diceSpent, 0)
                 showShortRestDialog = false
             }
         )

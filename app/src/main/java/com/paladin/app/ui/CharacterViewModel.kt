@@ -144,7 +144,7 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         }
     }
 
-    fun performShortRest(hitDiceToSpend: Int, rolledHp: Int) {
+    fun performShortRest(hitDiceToSpend: Int, rolledHp: Int = 0) {
         val updated = RestService.performShortRest(
             character = character.value,
             hitDiceToSpend = hitDiceToSpend,
