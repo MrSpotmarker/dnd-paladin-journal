@@ -1,7 +1,7 @@
 package com.paladin.app.data
 
 import android.content.Context
-import android.net.Uri
+import androidx.core.net.toUri
 import com.paladin.app.model.CharacterSheet
 import kotlinx.serialization.json.Json
 import java.io.BufferedInputStream
@@ -28,16 +28,13 @@ object CharacterBackupManager {
         encodeDefaults = true
     }
 
-    private const val MAX_IMAGE_DIMENSION = 1920
-    private const val JPEG_QUALITY = 82
-
     /**
      * Exports the character and all referenced images into a compressed .paladin ZIP archive
      * directly into the given OutputStream (e.g. from context.contentResolver.openOutputStream(targetUri)).
      * Returns the number of images bundled.
      */
     fun exportBackupArchive(
-        context: Context,
+        @Suppress("UNUSED_PARAMETER") context: Context,
         outputStream: OutputStream,
         character: CharacterSheet
     ): Result<Int> = runCatching {
@@ -58,7 +55,7 @@ object CharacterBackupManager {
 
         // Custom Profile Image (if local file)
         character.customProfileImagePath?.let { path ->
-            val file = if (path.startsWith("file://")) File(Uri.parse(path).path ?: "") else File(path)
+            val file = if (path.startsWith("file://")) File(path.toUri().path ?: "") else File(path)
             if (file.exists() && !imageMapping.containsKey(file.absolutePath)) {
                 val archiveName = "images/profile_${UUID.randomUUID().toString().take(8)}.jpg"
                 imageMapping[file.absolutePath] = archiveName
@@ -67,7 +64,7 @@ object CharacterBackupManager {
 
         // Custom Full Image (if local file)
         character.customFullImagePath?.let { path ->
-            val file = if (path.startsWith("file://")) File(Uri.parse(path).path ?: "") else File(path)
+            val file = if (path.startsWith("file://")) File(path.toUri().path ?: "") else File(path)
             if (file.exists() && !imageMapping.containsKey(file.absolutePath)) {
                 val archiveName = "images/full_${UUID.randomUUID().toString().take(8)}.jpg"
                 imageMapping[file.absolutePath] = archiveName
@@ -83,12 +80,12 @@ object CharacterBackupManager {
         }
 
         val rewrittenProfilePath = character.customProfileImagePath?.let { path ->
-            val file = if (path.startsWith("file://")) File(Uri.parse(path).path ?: "") else File(path)
+            val file = if (path.startsWith("file://")) File(path.toUri().path ?: "") else File(path)
             imageMapping[file.absolutePath] ?: path
         }
 
         val rewrittenFullPath = character.customFullImagePath?.let { path ->
-            val file = if (path.startsWith("file://")) File(Uri.parse(path).path ?: "") else File(path)
+            val file = if (path.startsWith("file://")) File(path.toUri().path ?: "") else File(path)
             imageMapping[file.absolutePath] ?: path
         }
 

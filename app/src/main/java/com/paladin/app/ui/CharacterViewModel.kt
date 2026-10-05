@@ -82,6 +82,7 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         repository.updateCharacter(character.value.copy(tempHp = amount.coerceAtLeast(0)))
     }
 
+    @Suppress("unused")
     fun addTempHp(amount: Int) {
         val currentTemp = character.value.tempHp
         repository.updateCharacter(character.value.copy(tempHp = (currentTemp + amount).coerceAtLeast(0)))
@@ -179,14 +180,17 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         repository.updateCharacter(character.value.copy(heroicInspirations = updated))
     }
 
+    @Suppress("unused")
     fun setHeroicInspiration(count: Int) {
         repository.updateCharacter(character.value.copy(heroicInspirations = count.coerceAtLeast(0)))
     }
 
+    @Suppress("unused")
     fun updateGold(amount: Double) {
         repository.updateCharacter(character.value.copy(goldPieces = maxOf(0.0, amount)))
     }
 
+    @Suppress("unused")
     fun addGold(delta: Double) {
         val current = character.value.goldPieces
         repository.updateCharacter(character.value.copy(goldPieces = maxOf(0.0, current + delta)))
@@ -448,7 +452,7 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         return try {
             val formatter = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy", java.util.Locale.GERMAN)
             java.time.LocalDate.now().format(formatter)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.GERMAN)
             sdf.format(java.util.Date())
         }
@@ -511,6 +515,7 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         }
     }
 
+    @Suppress("unused")
     fun reorderJournalEntries(newEntries: List<JournalEntry>) {
         repository.updateCharacter(character.value.copy(journalEntries = newEntries))
     }
@@ -609,9 +614,9 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
                     )
                 },
                 onFailure = { error ->
-                    val userFriendlyMsg = when {
-                        error is java.net.UnknownHostException -> "Keine Internetverbindung oder API-Server nicht erreichbar."
-                        error is java.net.SocketTimeoutException -> "Zeitüberschreitung bei der Online-Anfrage."
+                    val userFriendlyMsg = when (error) {
+                        is java.net.UnknownHostException -> "Keine Internetverbindung oder API-Server nicht erreichbar."
+                        is java.net.SocketTimeoutException -> "Zeitüberschreitung bei der Online-Anfrage."
                         else -> error.localizedMessage ?: "Fehler bei der Online-Suche."
                     }
                     _searchState.value = OnlineSearchState.Error(userFriendlyMsg)
@@ -673,6 +678,7 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
                srdSpells.value.any { it.id == id || it.name.equals(name, ignoreCase = true) }
     }
 
+    @Suppress("unused")
     fun isItemImported(id: String, name: String): Boolean {
         return character.value.inventory.any { it.id == id || it.name.equals(name, ignoreCase = true) }
     }

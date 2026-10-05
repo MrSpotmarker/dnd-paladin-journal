@@ -1,7 +1,9 @@
 package com.paladin.app.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -44,14 +46,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.paladin.app.R
 import com.paladin.app.model.Ability
+import com.paladin.app.model.DetailItem
+import com.paladin.app.model.FeatCatalog
+import com.paladin.app.model.FeatCategory
 import com.paladin.app.model.Species
 import com.paladin.app.ui.CharacterViewModel
 import com.paladin.app.ui.components.CharacterBackupCard
+import com.paladin.app.ui.components.CharacterProfileAvatar
 import com.paladin.app.ui.theme.BorderBrass
 import com.paladin.app.ui.theme.BorderDark
 import com.paladin.app.ui.theme.DarkNavyBackground
@@ -80,7 +92,7 @@ fun LevelUpScreen(
         mutableStateOf(character.feats.toSet())
     }
     var customFeatInput by remember { mutableStateOf("") }
-    val featLimit = remember(selectedLevel) { com.paladin.app.model.FeatCatalog.getStandardFeatLimit(selectedLevel) }
+    val featLimit = remember(selectedLevel) { FeatCatalog.getStandardFeatLimit(selectedLevel) }
     val isFeatOverrun = selectedFeats.size > featLimit
 
     // Ability Score Improvement (ASI - Stufe 4, 8, 12, 16, 19)
@@ -227,8 +239,8 @@ fun LevelUpScreen(
 
                 // Checkboxes for Feats
                 Text("Kampfstile (Stufe 2+):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                com.paladin.app.model.FeatCatalog.allFeats
-                    .filter { it.category == com.paladin.app.model.FeatCategory.FIGHTING_STYLE }
+                FeatCatalog.allFeats
+                    .filter { it.category == FeatCategory.FIGHTING_STYLE }
                     .forEach { feat ->
                         val isChecked = selectedFeats.any { it.equals(feat.name, ignoreCase = true) }
                         @OptIn(ExperimentalFoundationApi::class)
@@ -244,7 +256,7 @@ fun LevelUpScreen(
                                         }
                                     },
                                     onLongClick = {
-                                        viewModel.showDetail(com.paladin.app.model.DetailItem.FeatInfo(feat))
+                                        viewModel.showDetail(DetailItem.FeatInfo(feat))
                                     }
                                 )
                                 .padding(vertical = 2.dp),
@@ -277,8 +289,8 @@ fun LevelUpScreen(
                     }
 
                 Text("Herkunftstalente (Stufe 1):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                com.paladin.app.model.FeatCatalog.allFeats
-                    .filter { it.category == com.paladin.app.model.FeatCategory.ORIGIN }
+                FeatCatalog.allFeats
+                    .filter { it.category == FeatCategory.ORIGIN }
                     .forEach { feat ->
                         val isChecked = selectedFeats.any { it.equals(feat.name, ignoreCase = true) }
                         @OptIn(ExperimentalFoundationApi::class)
@@ -294,7 +306,7 @@ fun LevelUpScreen(
                                         }
                                     },
                                     onLongClick = {
-                                        viewModel.showDetail(com.paladin.app.model.DetailItem.FeatInfo(feat))
+                                        viewModel.showDetail(DetailItem.FeatInfo(feat))
                                     }
                                 )
                                 .padding(vertical = 2.dp),
@@ -328,8 +340,8 @@ fun LevelUpScreen(
 
                 if (selectedLevel >= 4) {
                     Text("Allgemeine Talente (Stufe 4+):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    com.paladin.app.model.FeatCatalog.allFeats
-                        .filter { it.category == com.paladin.app.model.FeatCategory.GENERAL }
+                    FeatCatalog.allFeats
+                        .filter { it.category == FeatCategory.GENERAL }
                         .forEach { feat ->
                             val isChecked = selectedFeats.any { it.equals(feat.name, ignoreCase = true) || it.contains(feat.id, ignoreCase = true) }
                             @OptIn(ExperimentalFoundationApi::class)
@@ -345,7 +357,7 @@ fun LevelUpScreen(
                                             }
                                         },
                                         onLongClick = {
-                                            viewModel.showDetail(com.paladin.app.model.DetailItem.FeatInfo(feat))
+                                            viewModel.showDetail(DetailItem.FeatInfo(feat))
                                         }
                                     )
                                     .padding(vertical = 2.dp),
@@ -778,24 +790,24 @@ private fun CharacterImagePickerCard(viewModel: CharacterViewModel) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = com.paladin.app.ui.theme.SurfaceCard),
+        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
         shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, com.paladin.app.ui.theme.BorderBrass.copy(alpha = 0.4f))
+        border = BorderStroke(1.dp, BorderBrass.copy(alpha = 0.4f))
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 text = "🖼️ Charakterbilder",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = com.paladin.app.ui.theme.PaladinGold
+                color = PaladinGold
             )
             Text(
                 text = "Wähle eigene Bilder vom Gerät oder setze auf die Standard-Illustrationen zurück.",
                 fontSize = 12.sp,
-                color = com.paladin.app.ui.theme.TextSecondary
+                color = TextSecondary
             )
 
-            HorizontalDivider(color = com.paladin.app.ui.theme.BorderDark)
+            HorizontalDivider(color = BorderDark)
 
             // Profilbild
             Row(
@@ -804,17 +816,17 @@ private fun CharacterImagePickerCard(viewModel: CharacterViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Vorschau
-                com.paladin.app.ui.components.CharacterProfileAvatar(
+                CharacterProfileAvatar(
                     customProfileImagePath = character.customProfileImagePath,
                     customFullImagePath = character.customFullImagePath,
                     size = 52
                 )
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Profilbild (Tab-Icon)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = com.paladin.app.ui.theme.TextPrimary)
+                    Text("Profilbild (Tab-Icon)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                     if (character.customProfileImagePath != null) {
-                        Text("✅ Eigenes Bild aktiv", fontSize = 11.sp, color = com.paladin.app.ui.theme.ProficiencyGreen)
+                        Text("✅ Eigenes Bild aktiv", fontSize = 11.sp, color = ProficiencyGreen)
                     } else {
-                        Text("Standard-Bild", fontSize = 11.sp, color = com.paladin.app.ui.theme.TextSecondary)
+                        Text("Standard-Bild", fontSize = 11.sp, color = TextSecondary)
                     }
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -831,7 +843,7 @@ private fun CharacterImagePickerCard(viewModel: CharacterViewModel) {
                 }
             }
 
-            HorizontalDivider(color = com.paladin.app.ui.theme.BorderDark)
+            HorizontalDivider(color = BorderDark)
 
             // Vollbild
             Row(
@@ -844,33 +856,34 @@ private fun CharacterImagePickerCard(viewModel: CharacterViewModel) {
                     modifier = Modifier
                         .size(52.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .border(1.dp, com.paladin.app.ui.theme.PaladinGold, RoundedCornerShape(8.dp))
+                        .border(1.dp, PaladinGold, RoundedCornerShape(8.dp))
                 ) {
-                    if (character.customFullImagePath != null) {
-                        coil.compose.AsyncImage(
-                            model = coil.request.ImageRequest.Builder(LocalContext.current)
-                                .data(android.net.Uri.parse(character.customFullImagePath))
+                    val fullPath = character.customFullImagePath
+                    if (fullPath != null) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(fullPath.toUri())
                                 .crossfade(true)
                                 .build(),
                             contentDescription = "Vollbild Vorschau",
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = com.paladin.app.R.drawable.lein),
+                        Image(
+                            painter = painterResource(id = R.drawable.lein),
                             contentDescription = "Vollbild Vorschau",
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Vollansicht (Klick auf Profilbild)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = com.paladin.app.ui.theme.TextPrimary)
+                    Text("Vollansicht (Klick auf Profilbild)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                     if (character.customFullImagePath != null) {
-                        Text("✅ Eigenes Bild aktiv", fontSize = 11.sp, color = com.paladin.app.ui.theme.ProficiencyGreen)
+                        Text("✅ Eigenes Bild aktiv", fontSize = 11.sp, color = ProficiencyGreen)
                     } else {
-                        Text("Standard-Bild", fontSize = 11.sp, color = com.paladin.app.ui.theme.TextSecondary)
+                        Text("Standard-Bild", fontSize = 11.sp, color = TextSecondary)
                     }
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

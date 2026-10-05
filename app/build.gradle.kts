@@ -76,6 +76,7 @@ dependencies {
 
     // Coil – Image loading (für benutzerdefinierte Charakterbilder)
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

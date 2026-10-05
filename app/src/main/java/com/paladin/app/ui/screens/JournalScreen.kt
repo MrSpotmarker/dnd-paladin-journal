@@ -313,7 +313,7 @@ fun JournalSectionItem(
     onImageClick: (String) -> Unit
 ) {
     var titleText by remember(entry.id, entry.title, entry.dateText) { 
-        mutableStateOf(if (entry.title.isNotBlank()) entry.title else entry.dateText) 
+        mutableStateOf(entry.title.ifBlank { entry.dateText }) 
     }
     var contentText by remember(entry.id, entry.content) { mutableStateOf(entry.content) }
     var isEditingTitle by remember { mutableStateOf(false) }

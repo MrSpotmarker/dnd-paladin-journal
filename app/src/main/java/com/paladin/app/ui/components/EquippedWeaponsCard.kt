@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paladin.app.model.AttackInfo
 import com.paladin.app.model.DetailItem
+import com.paladin.app.model.SpellSlotState
 import com.paladin.app.ui.theme.BorderBrass
 import com.paladin.app.ui.theme.BorderDark
 import com.paladin.app.ui.theme.DarkNavyBackground
@@ -63,17 +65,17 @@ import com.paladin.app.ui.theme.TextSecondary
 @Composable
 fun EquippedWeaponsCard(
     attacks: List<AttackInfo>,
-    spellSlots: List<com.paladin.app.model.SpellSlotState> = emptyList(),
+    modifier: Modifier = Modifier,
+    spellSlots: List<SpellSlotState> = emptyList(),
     attacksPerAction: Int = 1,
     onUseSlot: (Int) -> Unit = {},
-    onShowDetail: (DetailItem) -> Unit = {},
-    modifier: Modifier = Modifier
+    onShowDetail: (DetailItem) -> Unit = {}
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceCard),
         shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderBrass.copy(alpha = 0.4f))
+        border = BorderStroke(1.dp, BorderBrass.copy(alpha = 0.4f))
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(

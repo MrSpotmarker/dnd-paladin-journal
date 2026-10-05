@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -740,8 +741,8 @@ fun EditSteedHpDialog(
     onDismiss: () -> Unit,
     onSave: (current: Int, maxOverride: Int?) -> Unit
 ) {
-    var editCurrentHp by remember { mutableStateOf(currentHp) }
-    var editMaxHp by remember { mutableStateOf(maxHp) }
+    var editCurrentHp by remember { mutableIntStateOf(currentHp) }
+    var editMaxHp by remember { mutableIntStateOf(maxHp) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(

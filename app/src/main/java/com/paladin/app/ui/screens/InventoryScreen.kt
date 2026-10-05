@@ -2,6 +2,7 @@ package com.paladin.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -64,6 +65,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -341,7 +343,7 @@ fun InventoryScreen(
 fun InventoryItemRow(
     item: Item,
     onToggleEquip: () -> Unit,
-    onToggleAttune: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onToggleAttune: () -> Unit,
     onUpdateQuantity: (Int) -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -359,11 +361,11 @@ fun InventoryItemRow(
         ),
         shape = RoundedCornerShape(12.dp),
         border = if (item.isEquipped) {
-            androidx.compose.foundation.BorderStroke(1.dp, PaladinGold.copy(alpha = 0.6f))
+            BorderStroke(1.dp, PaladinGold.copy(alpha = 0.6f))
         } else if (item.type.isConsumableOrPotion) {
-            androidx.compose.foundation.BorderStroke(1.dp, ChaunteaGreen.copy(alpha = 0.45f))
+            BorderStroke(1.dp, ChaunteaGreen.copy(alpha = 0.45f))
         } else {
-            androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f))
+            BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f))
         }
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
@@ -756,7 +758,7 @@ fun AddItemDialog(
                                 )
                                 isCustomAdded = true
                                 coroutineScope.launch {
-                                    delay(600)
+                                    delay(600L)
                                     onDismiss()
                                 }
                             }
@@ -765,7 +767,7 @@ fun AddItemDialog(
                         enabled = !isCustomAdded && customName.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isCustomAdded) ProficiencyGreen else PaladinGold,
-                            contentColor = if (isCustomAdded) androidx.compose.ui.graphics.Color.White else DarkNavyBackground
+                            contentColor = if (isCustomAdded) Color.White else DarkNavyBackground
                         )
                     ) {
                         Text(if (isCustomAdded) "✓ Added" else "Gegenstand erstellen", fontWeight = FontWeight.Bold)

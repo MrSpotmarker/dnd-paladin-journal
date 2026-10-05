@@ -4,9 +4,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.media.ExifInterface
 import android.net.Uri
-import java.io.*
+import androidx.core.graphics.scale
+import androidx.exifinterface.media.ExifInterface
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
 
 /**
  * Utility for intelligent image optimization that preserves high text readability
@@ -98,7 +101,7 @@ object ImageOptimizationUtil {
                     val scaleFactor = MAX_IMAGE_DIMENSION.toFloat() / currentMax.toFloat()
                     val targetWidth = (bitmap.width * scaleFactor).toInt()
                     val targetHeight = (bitmap.height * scaleFactor).toInt()
-                    val scaled = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+                    val scaled = bitmap.scale(targetWidth, targetHeight)
                     if (scaled != bitmap) {
                         bitmap.recycle()
                         bitmap = scaled
@@ -122,7 +125,7 @@ object ImageOptimizationUtil {
                             bitmap = rotated
                         }
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Ignore EXIF failure
                 }
 

@@ -1,8 +1,19 @@
 package com.paladin.app.ui.screens.creation
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -12,18 +23,23 @@ import com.paladin.app.model.Ability
 import com.paladin.app.model.AbilityScores
 import com.paladin.app.model.Skill
 import com.paladin.app.model.Species
-import com.paladin.app.ui.theme.*
+import com.paladin.app.ui.theme.BorderDark
+import com.paladin.app.ui.theme.DarkNavyBackground
+import com.paladin.app.ui.theme.PaladinGold
+import com.paladin.app.ui.theme.SurfaceCard
+import com.paladin.app.ui.theme.TextPrimary
+import com.paladin.app.ui.theme.TextSecondary
 
 @Composable
 fun SummaryStepCard(
     name: String,
-    species: Species = Species.HUMAN,
     finalScores: AbilityScores,
     selectedClassSkills: Set<Skill>,
     selectedBackgroundSkills: Set<Skill>,
     selectedMasteries: Set<String>,
     onCompleteCreation: (startingHp: Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    species: Species = Species.HUMAN
 ) {
     val conMod = Ability.calculateModifier(finalScores.constitution)
     val startingHp = 10 + conMod

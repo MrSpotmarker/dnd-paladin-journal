@@ -1,5 +1,6 @@
 package com.paladin.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -52,16 +53,16 @@ fun CharacterHeader(
     stats: CalculatedStats,
     onOpenOverrides: () -> Unit,
     onOpenFeats: () -> Unit,
+    modifier: Modifier = Modifier,
     onModifyInspiration: (Int) -> Unit = {},
     onShowInspirationDetail: () -> Unit = {},
-    onShowSpeciesDetail: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onShowSpeciesDetail: () -> Unit = {}
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = SurfaceCard),
         shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderBrass.copy(alpha = 0.4f))
+        border = BorderStroke(1.dp, BorderBrass.copy(alpha = 0.4f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(

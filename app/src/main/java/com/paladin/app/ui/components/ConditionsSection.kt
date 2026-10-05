@@ -1,5 +1,6 @@
 package com.paladin.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -57,9 +58,9 @@ fun ConditionsSection(
     activeConditions: Set<Condition>,
     onToggleCondition: (Condition) -> Unit,
     onRemoveCondition: (Condition) -> Unit,
+    modifier: Modifier = Modifier,
     onCurePoisonLayOnHands: () -> Unit = {},
-    remainingLayOnHands: Int = 0,
-    modifier: Modifier = Modifier
+    remainingLayOnHands: Int = 0
 ) {
     var showConditionPicker by remember { mutableStateOf(false) }
     var selectedConditionForDetail by remember { mutableStateOf<Condition?>(null) }
@@ -67,7 +68,7 @@ fun ConditionsSection(
     Surface(
         color = SurfaceCardHighlight.copy(alpha = 0.6f),
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f)),
+        border = BorderStroke(1.dp, BorderDark.copy(alpha = 0.6f)),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
