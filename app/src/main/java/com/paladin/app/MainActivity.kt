@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.paladin.app.data.CharacterRepository
 import com.paladin.app.ui.CharacterViewModel
 import com.paladin.app.ui.components.DetailInfoDialog
+import com.paladin.app.ui.components.EditItemDialog
 import com.paladin.app.ui.screens.*
 import com.paladin.app.ui.theme.PaladinAppTheme
 import com.paladin.app.ui.theme.PaladinGold
@@ -40,12 +41,29 @@ class MainActivity : ComponentActivity() {
                 val viewModel = remember { CharacterViewModel(repository) }
                 val character by viewModel.character.collectAsState()
                 val activeDetail by viewModel.activeDetail.collectAsState()
+                val editingItem by viewModel.editingItem.collectAsState()
                 var selectedTab by remember { mutableStateOf(AppTab.SHEET) }
 
                 activeDetail?.let { detailItem ->
                     DetailInfoDialog(
                         item = detailItem,
-                        onDismiss = viewModel::dismissDetail
+                        onDismiss = viewModel::dismissDetail,
+                        onEditItem = { itemToEdit ->
+                            viewModel.startEditingItem(itemToEdit)
+                        }
+                    )
+                }
+
+                editingItem?.let { itemToEdit ->
+                    EditItemDialog(
+                        item = itemToEdit,
+                        onDismiss = viewModel::stopEditingItem,
+                        onSave = { updatedItem ->
+                            viewModel.updateItem(updatedItem)
+                        },
+                        onSaveAsCopy = { newItem ->
+                            viewModel.addItem(newItem)
+                        }
                     )
                 }
 

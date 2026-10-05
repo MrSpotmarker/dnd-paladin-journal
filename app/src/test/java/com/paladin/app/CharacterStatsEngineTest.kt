@@ -331,4 +331,132 @@ class CharacterStatsEngineTest {
         assertEquals("Aufbruch in die Gruft.", character.journalEntries[0].content)
         assertEquals("04.10.2026", character.journalEntries[1].dateText)
     }
+
+    @Test
+    fun testSpeciesSpeedCalculation() {
+        val humanChar = CharacterSheet(species = Species.HUMAN)
+        val humanStats = CharacterStatsEngine.calculate(humanChar)
+        assertEquals("Human base speed should be 30 ft", 30, humanStats.speedFt)
+
+        val goliathChar = CharacterSheet(species = Species.GOLIATH)
+        val goliathStats = CharacterStatsEngine.calculate(goliathChar)
+        assertEquals("Goliath base speed should be 35 ft", 35, goliathStats.speedFt)
+    }
+
+    @Test
+    fun testCurrencyAndEquivalent() {
+        val character = CharacterSheet(
+            goldPieces = 15.0,
+            silverPieces = 8,
+            copperPieces = 25
+        )
+
+        assertEquals(15.0, character.goldPieces, 0.001)
+        assertEquals(8, character.silverPieces)
+        assertEquals(25, character.copperPieces)
+        // 15 + 0.8 + 0.25 = 16.05 GP
+        assertEquals(16.05, character.totalGoldEquivalent, 0.001)
+    }
+
+    @Test
+    fun testItemQuantityAndWeightCalculation() {
+        val javelin = Item(
+            id = "javelin_1",
+            name = "Javelin",
+            type = ItemType.WEAPON,
+            weightLbs = 2.0,
+            quantity = 4
+        )
+        val potion = Item(
+            id = "potion_1",
+            name = "Potion of Healing",
+            type = ItemType.POTION,
+            weightLbs = 0.5,
+            quantity = 3
+        )
+
+        val character = CharacterSheet(
+            baseAbilityScores = AbilityScores(strength = 16),
+            inventory = listOf(javelin, potion)
+        )
+
+        val stats = CharacterStatsEngine.calculate(character)
+        // 4 * 2.0 + 3 * 0.5 = 8.0 + 1.5 = 9.5 lbs
+        assertEquals(9.5, stats.totalWeightLbs, 0.001)
+    }
+
+    @Test
+    fun testConsumablesAndPotionsCategory() {
+        val potion = Item(
+            id = "potion_1",
+            name = "Heiltrank",
+            type = ItemType.POTION,
+            weightLbs = 0.5,
+            quantity = 2
+        )
+        val herb = Item(
+            id = "herb_1",
+            name = "Königskraut (Heilpflanze)",
+            type = ItemType.CONSUMABLE,
+            weightLbs = 0.1,
+            quantity = 5
+        )
+        val weapon = Item(
+            id = "sword_1",
+            name = "Langschwert",
+            type = ItemType.WEAPON,
+            weightLbs = 3.0
+        )
+
+        assertTrue(potion.type.isConsumableOrPotion)
+        assertTrue(herb.type.isConsumableOrPotion)
+        assertFalse(weapon.type.isConsumableOrPotion)
+
+        val character = CharacterSheet(
+            inventory = listOf(potion, herb, weapon)
+        )
+
+        val consumables = character.inventory.filter { it.type.isConsumableOrPotion }
+        assertEquals(2, consumables.size)
+        assertTrue(consumables.any { it.name == "Heiltrank" })
+        assertTrue(consumables.any { it.name == "Königskraut (Heilpflanze)" })
+    }
+
+    @Test
+    fun testCustomizeOfficialItemInInventory() {
+        // Standard SRD Healing potion
+        val basePotion = Item(
+            id = "potion_srd_1",
+            name = "Potion of Healing",
+            type = ItemType.POTION,
+            description = "Regeneriert 2d4 + 2 Trefferpunkte.",
+            cost = "50 gp",
+            weightLbs = 0.5,
+            quantity = 2
+        )
+
+        var character = CharacterSheet(
+            inventory = listOf(basePotion)
+        )
+
+        // DM states this potion heals 1d4+3 instead
+        val customizedPotion = basePotion.copy(
+            name = "Heiltrank (1d4+3 Spezial)",
+            description = "Heilt 1d4 + 3 Trefferpunkte (spezieller DM-Wert).",
+            cost = "35 gp"
+        )
+
+        val updatedInventory = character.inventory.map { if (it.id == customizedPotion.id) customizedPotion else it }
+        character = character.copy(inventory = updatedInventory)
+
+        val itemInInventory = character.inventory.first { it.id == basePotion.id }
+        assertEquals("Heiltrank (1d4+3 Spezial)", itemInInventory.name)
+        assertEquals("Heilt 1d4 + 3 Trefferpunkte (spezieller DM-Wert).", itemInInventory.description)
+        assertEquals("35 gp", itemInInventory.cost)
+        assertEquals(ItemType.POTION, itemInInventory.type)
+        assertEquals(2, itemInInventory.quantity)
+
+        val stats = CharacterStatsEngine.calculate(character)
+        assertEquals(1.0, stats.totalWeightLbs, 0.001)
+    }
 }

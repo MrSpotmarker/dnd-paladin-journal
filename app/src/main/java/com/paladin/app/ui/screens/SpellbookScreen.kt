@@ -14,6 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,10 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paladin.app.data.online.OnlineSearchCategory
 import com.paladin.app.model.DetailItem
 import com.paladin.app.model.Spell
 import com.paladin.app.model.SpellSchool
 import com.paladin.app.ui.CharacterViewModel
+import com.paladin.app.ui.components.OnlineSearchDialog
 import com.paladin.app.ui.theme.*
 import java.util.UUID
 
@@ -40,6 +44,7 @@ fun SpellbookScreen(
     var selectedLevelFilter by remember { mutableStateOf<Int?>(null) }
     var onlyPreparedFilter by remember { mutableStateOf(false) }
     var showAddSpellDialog by remember { mutableStateOf(false) }
+    var showOnlineSearchDialog by remember { mutableStateOf(false) }
 
     val allSpells = remember(srdSpells, character.customSpells) {
         srdSpells + character.customSpells
@@ -79,13 +84,32 @@ fun SpellbookScreen(
                 )
             }
 
-            FloatingActionButton(
-                onClick = { showAddSpellDialog = true },
-                containerColor = PaladinGold,
-                contentColor = DarkNavyBackground,
-                modifier = Modifier.size(44.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Eigenen Zauber eintragen")
+                FilledTonalButton(
+                    onClick = { showOnlineSearchDialog = true },
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = SmiteBlue.copy(alpha = 0.2f),
+                        contentColor = SmiteBlue
+                    ),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(Icons.Default.Public, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Online", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+
+                FloatingActionButton(
+                    onClick = { showAddSpellDialog = true },
+                    containerColor = PaladinGold,
+                    contentColor = DarkNavyBackground,
+                    modifier = Modifier.size(44.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Eigenen Zauber eintragen")
+                }
             }
         }
 
@@ -147,12 +171,15 @@ fun SpellbookScreen(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            items(filteredSpells) { spell ->
+            items(filteredSpells, key = { it.id }) { spell ->
                 val isPrepared = spell.id in character.preparedSpellIds
+                val isCustom = character.customSpells.any { it.id == spell.id }
                 SpellCard(
                     spell = spell,
                     isPrepared = isPrepared,
+                    isCustom = isCustom,
                     onTogglePrepared = { viewModel.togglePrepareSpell(spell.id) },
+                    onDelete = if (isCustom) { { viewModel.removeCustomSpell(spell.id) } } else null,
                     onShowDetail = { viewModel.showDetail(DetailItem.SpellInfo(spell)) }
                 )
             }
@@ -168,6 +195,14 @@ fun SpellbookScreen(
             }
         )
     }
+
+    if (showOnlineSearchDialog) {
+        OnlineSearchDialog(
+            viewModel = viewModel,
+            initialCategory = OnlineSearchCategory.SPELLS,
+            onDismiss = { showOnlineSearchDialog = false }
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -175,7 +210,9 @@ fun SpellbookScreen(
 fun SpellCard(
     spell: Spell,
     isPrepared: Boolean,
+    isCustom: Boolean = false,
     onTogglePrepared: () -> Unit,
+    onDelete: (() -> Unit)? = null,
     onShowDetail: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -213,19 +250,38 @@ fun SpellCard(
                     )
                 }
 
-                // Prepare Button
-                IconButton(
-                    onClick = onTogglePrepared,
-                    modifier = Modifier.background(
-                        if (isPrepared) SpellSlotPurple else SurfaceCardHighlight,
-                        shape = RoundedCornerShape(8.dp)
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Vorbereiten",
-                        tint = if (isPrepared) DarkNavyBackground else TextSecondary
-                    )
+                    if (isCustom && onDelete != null) {
+                        IconButton(
+                            onClick = onDelete,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Löschen",
+                                tint = HealthRed.copy(alpha = 0.8f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    // Prepare Button
+                    IconButton(
+                        onClick = onTogglePrepared,
+                        modifier = Modifier.background(
+                            if (isPrepared) SpellSlotPurple else SurfaceCardHighlight,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Vorbereiten",
+                            tint = if (isPrepared) DarkNavyBackground else TextSecondary
+                        )
+                    }
                 }
             }
 

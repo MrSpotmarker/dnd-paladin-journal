@@ -3,13 +3,17 @@ package com.paladin.app.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class ItemType {
-    WEAPON,
-    ARMOR,
-    SHIELD,
-    MAGIC_ITEM,
-    POTION,
-    GEAR
+enum class ItemType(val displayName: String, val icon: String) {
+    WEAPON("Waffe", "⚔️"),
+    ARMOR("Rüstung", "🛡️"),
+    SHIELD("Schild", "🛡️"),
+    MAGIC_ITEM("Magischer Gegenstand", "💍"),
+    POTION("Zaubertrank", "🧪"),
+    CONSUMABLE("Pflanze / Verbrauchsgut", "🌿"),
+    GEAR("Ausrüstung", "🎒");
+
+    val isConsumableOrPotion: Boolean
+        get() = this == POTION || this == CONSUMABLE
 }
 
 @Serializable

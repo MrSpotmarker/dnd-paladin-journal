@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paladin.app.model.Ability
+import com.paladin.app.model.Species
 import com.paladin.app.ui.CharacterViewModel
 import com.paladin.app.ui.components.*
 import com.paladin.app.ui.theme.*
@@ -433,6 +434,58 @@ fun LevelUpScreen(
                 ) {
                     Text("Stufe anwenden", fontWeight = FontWeight.Bold)
                 }
+            }
+        }
+
+        // Species / Volk Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "👤 Volk & Spezies",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PaladinGold
+                    )
+                    Text(
+                        text = "Tempo: ${character.species.baseSpeedFt} ft",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ProficiencyGreen
+                    )
+                }
+
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Species.entries.forEach { sp ->
+                        FilterChip(
+                            selected = sp == character.species,
+                            onClick = {
+                                viewModel.updateSpecies(sp)
+                                Toast.makeText(context, "Volk auf ${sp.displayName} geändert", Toast.LENGTH_SHORT).show()
+                            },
+                            label = { Text(sp.displayName, fontSize = 12.sp) }
+                        )
+                    }
+                }
+
+                Text(
+                    text = character.species.traitsDescription,
+                    fontSize = 12.sp,
+                    color = TextSecondary
+                )
             }
         }
 

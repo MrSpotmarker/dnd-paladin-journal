@@ -3,15 +3,21 @@ package com.paladin.app.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.paladin.app.data.CharacterRepository
+import com.paladin.app.data.online.DndOnlineRepository
+import com.paladin.app.data.online.OnlineSearchCategory
+import com.paladin.app.data.online.OnlineSearchResultItem
+import com.paladin.app.data.online.OnlineSearchState
 import com.paladin.app.engine.CharacterStatsEngine
 import com.paladin.app.engine.RestService
 import com.paladin.app.model.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class CharacterViewModel(private val repository: CharacterRepository) : ViewModel() {
 
@@ -31,12 +37,23 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
     private val _activeDetail = MutableStateFlow<DetailItem?>(null)
     val activeDetail: StateFlow<DetailItem?> = _activeDetail.asStateFlow()
 
+    private val _editingItem = MutableStateFlow<Item?>(null)
+    val editingItem: StateFlow<Item?> = _editingItem.asStateFlow()
+
     fun showDetail(item: DetailItem) {
         _activeDetail.value = item
     }
 
     fun dismissDetail() {
         _activeDetail.value = null
+    }
+
+    fun startEditingItem(item: Item) {
+        _editingItem.value = item
+    }
+
+    fun stopEditingItem() {
+        _editingItem.value = null
     }
 
     fun takeDamage(amount: Int) {
@@ -126,6 +143,39 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
             maxHp = calculatedStats.value.maxHp
         )
         repository.updateCharacter(updated)
+    }
+
+    fun modifyHeroicInspiration(delta: Int) {
+        val current = character.value.heroicInspirations
+        val updated = (current + delta).coerceAtLeast(0)
+        repository.updateCharacter(character.value.copy(heroicInspirations = updated))
+    }
+
+    fun setHeroicInspiration(count: Int) {
+        repository.updateCharacter(character.value.copy(heroicInspirations = count.coerceAtLeast(0)))
+    }
+
+    fun updateGold(amount: Double) {
+        repository.updateCharacter(character.value.copy(goldPieces = maxOf(0.0, amount)))
+    }
+
+    fun addGold(delta: Double) {
+        val current = character.value.goldPieces
+        repository.updateCharacter(character.value.copy(goldPieces = maxOf(0.0, current + delta)))
+    }
+
+    fun updateCurrency(gold: Double, silver: Int, copper: Int) {
+        repository.updateCharacter(
+            character.value.copy(
+                goldPieces = maxOf(0.0, gold),
+                silverPieces = maxOf(0, silver),
+                copperPieces = maxOf(0, copper)
+            )
+        )
+    }
+
+    fun updateSpecies(species: Species) {
+        repository.updateCharacter(character.value.copy(species = species))
     }
 
     fun toggleEquipItem(itemId: String) {
@@ -272,6 +322,26 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         repository.updateCharacter(character.value.copy(inventory = character.value.inventory.filter { it.id != itemId }))
     }
 
+    fun updateItemQuantity(itemId: String, quantity: Int) {
+        val validQuantity = maxOf(1, quantity)
+        val updated = character.value.inventory.map { item ->
+            if (item.id == itemId) item.copy(quantity = validQuantity) else item
+        }
+        repository.updateCharacter(character.value.copy(inventory = updated))
+    }
+
+    fun updateItem(updatedItem: Item) {
+        val updated = character.value.inventory.map { item ->
+            if (item.id == updatedItem.id) updatedItem else item
+        }
+        repository.updateCharacter(character.value.copy(inventory = updated))
+
+        val currentDetail = _activeDetail.value
+        if (currentDetail is DetailItem.ItemInfo && currentDetail.item.id == updatedItem.id) {
+            _activeDetail.value = DetailItem.ItemInfo(updatedItem)
+        }
+    }
+
     fun addCustomSpell(spell: Spell) {
         repository.updateCharacter(character.value.copy(customSpells = character.value.customSpells + spell))
     }
@@ -327,6 +397,7 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
         skills: Set<Skill>,
         weaponMasteries: List<String>,
         manualHp: Int? = null,
+        species: Species = Species.HUMAN,
         initialFeats: List<String> = listOf("Alert (Wachsam)", "Savage Attacker (Brutaler Angreifer)", "Dueling (Duellieren)")
     ) {
         val conMod = Ability.calculateModifier(abilityScores.constitution)
@@ -335,6 +406,8 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
             name = name.ifBlank { "Sir Valerius" },
             level = 1,
             hasCompletedCreation = true,
+            species = species,
+            heroicInspirations = species.defaultInspirationsOnLongRest,
             baseAbilityScores = abilityScores,
             currentHp = maxHp,
             tempHp = 0,
@@ -356,5 +429,107 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
 
     fun importBackupJson(jsonStr: String): Boolean {
         return repository.importCharacterFromJson(jsonStr).isSuccess
+    }
+
+    // -------------------------------------------------------------
+    // ONLINE SEARCH & DYNAMIC IMPORT
+    // -------------------------------------------------------------
+    private val onlineRepository = DndOnlineRepository()
+
+    private val _searchState = MutableStateFlow<OnlineSearchState>(OnlineSearchState.Idle)
+    val searchState: StateFlow<OnlineSearchState> = _searchState.asStateFlow()
+
+    private var searchJob: Job? = null
+
+    fun searchOnline(query: String, category: OnlineSearchCategory = OnlineSearchCategory.ALL) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) {
+            _searchState.value = OnlineSearchState.Idle
+            return
+        }
+
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _searchState.value = OnlineSearchState.Loading
+            val result = onlineRepository.search(trimmed, category)
+            result.fold(
+                onSuccess = { items ->
+                    _searchState.value = OnlineSearchState.Success(
+                        results = items,
+                        query = trimmed,
+                        category = category
+                    )
+                },
+                onFailure = { error ->
+                    val userFriendlyMsg = when {
+                        error is java.net.UnknownHostException -> "Keine Internetverbindung oder API-Server nicht erreichbar."
+                        error is java.net.SocketTimeoutException -> "Zeitüberschreitung bei der Online-Anfrage."
+                        else -> error.localizedMessage ?: "Fehler bei der Online-Suche."
+                    }
+                    _searchState.value = OnlineSearchState.Error(userFriendlyMsg)
+                }
+            )
+        }
+    }
+
+    fun clearOnlineSearch() {
+        searchJob?.cancel()
+        _searchState.value = OnlineSearchState.Idle
+    }
+
+    fun importSpell(spell: Spell) {
+        val currentCustom = character.value.customSpells
+        if (currentCustom.none { it.id == spell.id || it.name.equals(spell.name, ignoreCase = true) }) {
+            val updated = currentCustom + spell
+            repository.updateCharacter(character.value.copy(customSpells = updated))
+        }
+    }
+
+    fun removeCustomSpell(spellId: String) {
+        val updated = character.value.customSpells.filter { it.id != spellId }
+        val updatedPrepared = character.value.preparedSpellIds.filter { it != spellId }.toSet()
+        repository.updateCharacter(character.value.copy(customSpells = updated, preparedSpellIds = updatedPrepared))
+    }
+
+    fun importItem(item: Item) {
+        val currentInv = character.value.inventory
+        val existingIndex = currentInv.indexOfFirst { it.name.equals(item.name, ignoreCase = true) }
+        val updated = if (existingIndex >= 0) {
+            currentInv.toMutableList().apply {
+                this[existingIndex] = this[existingIndex].copy(quantity = this[existingIndex].quantity + 1)
+            }
+        } else {
+            currentInv + item
+        }
+        repository.updateCharacter(character.value.copy(inventory = updated))
+    }
+
+    fun importFeat(feat: FeatDefinition) {
+        val currentFeats = character.value.feats
+        if (currentFeats.none { it.equals(feat.name, ignoreCase = true) }) {
+            val updated = currentFeats + feat.name
+            repository.updateCharacter(character.value.copy(feats = updated))
+        }
+    }
+
+    fun parseAndImportRawSpell(rawText: String): Spell? {
+        val parsed = onlineRepository.parseRawTextToSpell(rawText)
+        if (parsed != null) {
+            importSpell(parsed)
+        }
+        return parsed
+    }
+
+    fun isSpellImported(id: String, name: String): Boolean {
+        return character.value.customSpells.any { it.id == id || it.name.equals(name, ignoreCase = true) } ||
+               srdSpells.value.any { it.id == id || it.name.equals(name, ignoreCase = true) }
+    }
+
+    fun isItemImported(id: String, name: String): Boolean {
+        return character.value.inventory.any { it.id == id || it.name.equals(name, ignoreCase = true) }
+    }
+
+    fun isFeatImported(name: String): Boolean {
+        return character.value.feats.any { it.equals(name, ignoreCase = true) }
     }
 }

@@ -160,7 +160,7 @@ object CharacterStatsEngine {
             carryCapacityLbs = carryCapacity,
             attacks = attacks,
             initiative = initiative,
-            speedFt = 30,
+            speedFt = character.species.baseSpeedFt,
             hasDmOverrides = character.dmOverrides.isActive,
             activeBuffs = activeBuffList
         )

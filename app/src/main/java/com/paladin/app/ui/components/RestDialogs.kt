@@ -148,6 +148,7 @@ fun LongRestDialog(
                 Text(text = "✓ Handauflegen-Pool (Lay on Hands) voll aufgefüllt", fontSize = 13.sp, color = LayOnHandsGreen)
                 Text(text = "✓ Channel Divinity Nutzungen voll aufgeladen", fontSize = 13.sp, color = SmiteBlue)
                 Text(text = "✓ $recoveredDice Trefferwürfel (Hit Dice) regeneriert", fontSize = 13.sp, color = PaladinGold)
+                Text(text = "✓ Heroische Inspiration regeneriert (Mensch: 1)", fontSize = 13.sp, color = PaladinGoldBright)
                 Text(text = "✓ Temporary HP werden auf 0 gesetzt", fontSize = 13.sp, color = TextSecondary)
                 Text(text = "✓ Todes-Rettungswürfe zurückgesetzt", fontSize = 13.sp, color = TextSecondary)
             }

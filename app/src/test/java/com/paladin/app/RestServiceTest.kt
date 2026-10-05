@@ -112,5 +112,21 @@ class RestServiceTest {
         assertTrue("Active buffs should expire after long rest", rested.activeBuffIds.isEmpty())
         // Hit dice recovery: half of level (4 / 2 = 2 recovered). hitDiceUsed was 3 -> now 1
         assertEquals(1, rested.hitDiceUsed)
+        // Heroic Inspiration resets to 1 for Human (Resourceful trait)
+        assertEquals(1, rested.heroicInspirations)
+    }
+
+    @Test
+    fun testRestResetsHeroicInspirationsForHuman() {
+        val character = CharacterSheet(
+            heroicInspirations = 0,
+            species = com.paladin.app.model.Species.HUMAN
+        )
+
+        val shortRested = RestService.performShortRest(character, 0, 0, 20)
+        assertEquals(1, shortRested.heroicInspirations)
+
+        val longRested = RestService.performLongRest(character.copy(heroicInspirations = 0), 20)
+        assertEquals(1, longRested.heroicInspirations)
     }
 }

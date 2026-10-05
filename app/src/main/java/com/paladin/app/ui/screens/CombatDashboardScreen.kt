@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paladin.app.data.online.OnlineSearchCategory
 import com.paladin.app.model.Ability
 import com.paladin.app.model.CalculatedStats
 import com.paladin.app.model.ChannelDivinityDetails
@@ -45,6 +46,7 @@ fun CombatDashboardScreen(
     var showLongRestDialog by remember { mutableStateOf(false) }
     var showDmOverrideDialog by remember { mutableStateOf(false) }
     var showFeatsDialog by remember { mutableStateOf(false) }
+    var showFeatsOnlineSearch by remember { mutableStateOf(false) }
     var isSkillsExpanded by remember { mutableStateOf(false) }
     var showEditAbilitiesDialog by remember { mutableStateOf(false) }
     var showPreparedSpellsDialog by remember { mutableStateOf(false) }
@@ -69,7 +71,43 @@ fun CombatDashboardScreen(
             character = character,
             stats = stats,
             onOpenOverrides = { showDmOverrideDialog = true },
-            onOpenFeats = { showFeatsDialog = true }
+            onOpenFeats = { showFeatsDialog = true },
+            onModifyInspiration = { delta -> viewModel.modifyHeroicInspiration(delta) },
+            onShowInspirationDetail = {
+                viewModel.showDetail(
+                    DetailItem.FeatureInfo(
+                        title = "Heroische Inspiration",
+                        subtitle = "D&D 2024 Regeln (PHB)",
+                        badge = "Kernmechanik",
+                        icon = "🎲",
+                        description = "Wenn du Heroische Inspiration besitzt, kannst du sie ausgeben, um einen beliebigen W20-Wurf (Angriffswurf, Rettungswurf oder Attributswurf) zu wiederholen. Du musst das neue Würfelergebnis verwenden.\n\nDu kannst eine heroische Inspiration auch an einen verbündeten Charakter weitergeben.",
+                        keyProperties = listOf(
+                            "Aktueller Vorrat" to "${character.heroicInspirations}",
+                            "Spezies" to character.species.displayName,
+                            "Rast-Regeneration" to "${character.species.defaultInspirationsOnLongRest} (Mensch: Einfallsreich)"
+                        ),
+                        mechanicalBenefits = listOf(
+                            "W20-Neu-Würfeln bei Fehlschlägen oder riskanten Situationen",
+                            "Wird bei Rast automatisch auf den Spezies-Standard zurückgesetzt"
+                        )
+                    )
+                )
+            },
+            onShowSpeciesDetail = {
+                viewModel.showDetail(
+                    DetailItem.FeatureInfo(
+                        title = "Spezies: ${character.species.displayName}",
+                        subtitle = "D&D 2024 Spezies",
+                        badge = "${character.species.baseSpeedFt} ft Bewegung",
+                        icon = "👤",
+                        description = character.species.traitsDescription,
+                        keyProperties = listOf(
+                            "Basis-Bewegung" to "${character.species.baseSpeedFt} ft",
+                            "Inspiration bei Rast" to "${character.species.defaultInspirationsOnLongRest}"
+                        )
+                    )
+                )
+            }
         )
 
         // Active Buffs Banner (Shield of Faith, Bless, Sacred Weapon, etc.)
@@ -376,7 +414,16 @@ fun CombatDashboardScreen(
                 viewModel.updateFeats(updatedFeats)
                 showFeatsDialog = false
             },
-            onShowDetail = { viewModel.showDetail(it) }
+            onShowDetail = { viewModel.showDetail(it) },
+            onOpenOnlineSearch = { showFeatsOnlineSearch = true }
+        )
+    }
+
+    if (showFeatsOnlineSearch) {
+        OnlineSearchDialog(
+            viewModel = viewModel,
+            initialCategory = OnlineSearchCategory.FEATS,
+            onDismiss = { showFeatsOnlineSearch = false }
         )
     }
 

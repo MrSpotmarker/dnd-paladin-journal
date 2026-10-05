@@ -23,12 +23,13 @@ import androidx.compose.ui.unit.sp
 import com.paladin.app.model.Ability
 import com.paladin.app.model.AbilityScores
 import com.paladin.app.model.Skill
+import com.paladin.app.model.Species
 import com.paladin.app.ui.CharacterViewModel
 import com.paladin.app.ui.screens.creation.*
 import com.paladin.app.ui.theme.*
 
 enum class CreationStep(val title: String) {
-    IDENTITY("1. Name"),
+    IDENTITY("1. Identität & Volk"),
     ATTRIBUTES("2. Attribute"),
     SKILLS("3. Fertigkeiten"),
     MASTERIES("4. Waffen"),
@@ -42,8 +43,9 @@ fun CharacterCreationScreen(
 ) {
     var currentStep by remember { mutableStateOf(CreationStep.IDENTITY) }
 
-    // Step 1: Identity
+    // Step 1: Identity & Species
     var name by remember { mutableStateOf("Sir Valerius") }
+    var selectedSpecies by remember { mutableStateOf(Species.HUMAN) }
 
     // Step 2: Ability Scores
     var standardScores by remember {
@@ -154,6 +156,72 @@ fun CharacterCreationScreen(
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
+
+                        HorizontalDivider(color = BorderDark)
+
+                        Text(
+                            text = "Volk / Spezies (PHB 2024)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = PaladinGold
+                        )
+
+                        // Species Chips FlowRow
+                        @OptIn(ExperimentalLayoutApi::class)
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Species.entries.forEach { sp ->
+                                FilterChip(
+                                    selected = sp == selectedSpecies,
+                                    onClick = { selectedSpecies = sp },
+                                    label = { Text(sp.displayName, fontSize = 12.sp) }
+                                )
+                            }
+                        }
+
+                        // Selected species traits card
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = SurfaceCardHighlight),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = selectedSpecies.displayName,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = PaladinGoldBright
+                                    )
+                                    Text(
+                                        text = "Tempo: ${selectedSpecies.baseSpeedFt} ft",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = ProficiencyGreen
+                                    )
+                                }
+                                Text(
+                                    text = selectedSpecies.traitsDescription,
+                                    fontSize = 11.sp,
+                                    color = TextPrimary
+                                )
+                                if (selectedSpecies == Species.HUMAN) {
+                                    Text(
+                                        text = "✓ Startet mit 1 Heroischen Inspiration (wird bei jeder Rast regeneriert)",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = PaladinGold
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -209,6 +277,7 @@ fun CharacterCreationScreen(
             CreationStep.SUMMARY -> {
                 SummaryStepCard(
                     name = name,
+                    species = selectedSpecies,
                     finalScores = finalScores,
                     selectedClassSkills = selectedClassSkills,
                     selectedBackgroundSkills = selectedBackgroundSkills,
@@ -219,7 +288,8 @@ fun CharacterCreationScreen(
                             abilityScores = finalScores,
                             skills = selectedClassSkills + selectedBackgroundSkills,
                             weaponMasteries = selectedMasteries.toList(),
-                            manualHp = startingHp
+                            manualHp = startingHp,
+                            species = selectedSpecies
                         )
                     }
                 )

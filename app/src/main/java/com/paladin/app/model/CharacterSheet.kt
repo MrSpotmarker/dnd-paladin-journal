@@ -57,6 +57,8 @@ data class CharacterSheet(
     val level: Int = 1,
     val hasCompletedCreation: Boolean = true,
     val oath: String? = null, // z. B. "Oath of Devotion", "Oath of Vengeance"
+    val species: Species = Species.HUMAN,
+    val heroicInspirations: Int = 1,
     val baseAbilityScores: AbilityScores = AbilityScores(),
     val currentHp: Int = 12,
     val maxHpManualAdjustment: Int = 0, // falls gewürfelt statt Durchschnitt
@@ -75,7 +77,12 @@ data class CharacterSheet(
     val customSpells: List<Spell> = emptyList(),
     val dmOverrides: DmOverrides = DmOverrides(),
     val goldPieces: Double = 15.0,
+    val silverPieces: Int = 0,
+    val copperPieces: Int = 0,
     val deathSaves: DeathSavesState = DeathSavesState(),
     val notes: String = "",
     val journalEntries: List<JournalEntry> = emptyList()
-)
+) {
+    val totalGoldEquivalent: Double
+        get() = goldPieces + (silverPieces / 10.0) + (copperPieces / 100.0)
+}

@@ -34,9 +34,10 @@ fun FeatsDialog(
     currentFeats: List<String>,
     onDismiss: () -> Unit,
     onSave: (List<String>) -> Unit,
-    onShowDetail: (DetailItem) -> Unit = {}
+    onShowDetail: (DetailItem) -> Unit = {},
+    onOpenOnlineSearch: (() -> Unit)? = null
 ) {
-    var selectedFeats by remember { mutableStateOf(currentFeats.toSet()) }
+    var selectedFeats by remember(currentFeats) { mutableStateOf(currentFeats.toSet()) }
     var customFeatInput by remember { mutableStateOf("") }
 
     val standardLimit = remember(characterLevel) { FeatCatalog.getStandardFeatLimit(characterLevel) }
@@ -239,7 +240,7 @@ fun FeatsDialog(
                         OutlinedTextField(
                             value = customFeatInput,
                             onValueChange = { customFeatInput = it },
-                            label = { Text("Eigenes Talent / Fähigkeit") },
+                            label = { Text("Eigenes Talent") },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
@@ -253,6 +254,17 @@ fun FeatsDialog(
                             enabled = customFeatInput.isNotBlank()
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Hinzufügen")
+                        }
+                        if (onOpenOnlineSearch != null) {
+                            FilledTonalButton(
+                                onClick = onOpenOnlineSearch,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = SmiteBlue.copy(alpha = 0.2f),
+                                    contentColor = SmiteBlue
+                                )
+                            ) {
+                                Text("🌐", fontSize = 12.sp)
+                            }
                         }
                     }
                 }

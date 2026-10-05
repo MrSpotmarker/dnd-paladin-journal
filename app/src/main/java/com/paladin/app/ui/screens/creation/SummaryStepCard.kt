@@ -11,11 +11,13 @@ import androidx.compose.ui.unit.sp
 import com.paladin.app.model.Ability
 import com.paladin.app.model.AbilityScores
 import com.paladin.app.model.Skill
+import com.paladin.app.model.Species
 import com.paladin.app.ui.theme.*
 
 @Composable
 fun SummaryStepCard(
     name: String,
+    species: Species = Species.HUMAN,
     finalScores: AbilityScores,
     selectedClassSkills: Set<Skill>,
     selectedBackgroundSkills: Set<Skill>,
@@ -39,7 +41,7 @@ fun SummaryStepCard(
                 color = PaladinGold
             )
             Text(
-                text = "Stufe 1 Paladin (2024 Regeln)",
+                text = "Stufe 1 ${species.displayName}-Paladin (2024 Regeln)",
                 fontSize = 13.sp,
                 color = TextSecondary
             )
@@ -47,9 +49,11 @@ fun SummaryStepCard(
             HorizontalDivider(color = BorderDark)
 
             Text(
-                text = "• Trefferpunkte: $startingHp HP (10 + CON $conMod)\n" +
+                text = "• Volk/Spezies: ${species.displayName} (Tempo: ${species.baseSpeedFt} ft)\n" +
+                        "• Trefferpunkte: $startingHp HP (10 + CON $conMod)\n" +
                         "• Rüstungsklasse: 18 AC (Kettenhemd + Schild)\n" +
                         "• Handauflegen: 5 HP Pool (Bonus-Aktion)\n" +
+                        "• Heroische Inspiration: ${if (species == Species.HUMAN) "1 (Mensch: Resourceful)" else "0"}\n" +
                         "• Zauberplätze: 2x Grad 1 Slots\n" +
                         "• Vorbereitete Zauber: 4 (Bless, Cure Wounds, Smite, Shield of Faith)\n" +
                         "• Waffenmeisterschaften: ${selectedMasteries.joinToString(", ")}\n" +

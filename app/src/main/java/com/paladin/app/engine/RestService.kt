@@ -41,6 +41,7 @@ object RestService {
             tempHp = newTempHp,
             hitDiceUsed = newHitDiceUsed,
             channelDivinityUsed = newChannelDivinityUsed,
+            heroicInspirations = character.species.defaultInspirationsOnLongRest,
             activeBuffIds = emptySet()
         )
     }
@@ -54,6 +55,7 @@ object RestService {
      * - Channel Divinity wird vollständig aufgefüllt (channelDivinityUsed = 0).
      * - Die Hälfte der Trefferwürfel (mindestens 1) wird regeneriert.
      * - Todes-Rettungswürfe werden zurückgesetzt.
+     * - Heroische Inspirationen werden auf Spezies-Standard zurückgesetzt (Mensch = 1).
      * - Alle temporären Zauber und Buffs enden.
      */
     fun performLongRest(character: CharacterSheet, maxHp: Int): CharacterSheet {
@@ -66,6 +68,7 @@ object RestService {
             hitDiceUsed = newHitDiceUsed,
             layOnHandsUsed = 0,
             channelDivinityUsed = 0,
+            heroicInspirations = character.species.defaultInspirationsOnLongRest,
             spellSlotUsages = emptyMap(),
             activeBuffIds = emptySet(),
             deathSaves = DeathSavesState(successes = 0, failures = 0)
