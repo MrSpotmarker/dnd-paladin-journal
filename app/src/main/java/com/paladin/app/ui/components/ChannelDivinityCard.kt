@@ -110,25 +110,12 @@ fun ChannelDivinityCard(
                 ) {
                     Text("⚡", fontSize = 16.sp)
                     Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Göttliche Macht (Channel Divinity)",
-                                fontWeight = FontWeight.Bold,
-                                color = SmiteBlue,
-                                fontSize = 14.sp
-                            )
-                            IconButton(
-                                onClick = {
-                                    onShowDetail(ChannelDivinityDetails.getGeneralChannelDivinityDetail(oath, maxUses, chaMod))
-                                },
-                                modifier = Modifier.size(20.dp)
-                            ) {
-                                Text("ℹ️", fontSize = 11.sp)
-                            }
-                        }
+                        Text(
+                            text = "Göttliche Macht (Channel Divinity)",
+                            fontWeight = FontWeight.Bold,
+                            color = SmiteBlue,
+                            fontSize = 14.sp
+                        )
                         Text(
                             text = "Regeneriert 1 Ladung bei Kurzer Rast • Details lange drücken",
                             fontSize = 11.sp,
@@ -199,20 +186,14 @@ fun ChannelDivinityCard(
                                     )
                                     .padding(end = 8.dp, top = 2.dp, bottom = 2.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = "🌟 Heilige Waffe (Sacred Weapon)",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isSacredWeaponActive) PaladinGoldBright else TextPrimary
-                                    )
-                                    Text("ℹ️", fontSize = 10.sp)
-                                }
                                 Text(
-                                    text = "+$sacredBonus auf Waffen-Angriffe für 10 Min. (Info antippen)",
+                                    text = "🌟 Heilige Waffe (Sacred Weapon)",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSacredWeaponActive) PaladinGoldBright else TextPrimary
+                                )
+                                Text(
+                                    text = "+$sacredBonus auf Waffen-Angriffe für 10 Min.",
                                     fontSize = 10.sp,
                                     color = if (isSacredWeaponActive) PaladinGold else TextSecondary
                                 )
@@ -270,20 +251,14 @@ fun ChannelDivinityCard(
                                     )
                                     .padding(end = 8.dp, top = 2.dp, bottom = 2.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = "🎯 Gelübde der Feindschaft (Vow of Enmity)",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isVowOfEnmityActive) PaladinGoldBright else TextPrimary
-                                    )
-                                    Text("ℹ️", fontSize = 10.sp)
-                                }
                                 Text(
-                                    text = "Vorteil auf Angriffe gegen Ziel (1 Min. • Info antippen)",
+                                    text = "🎯 Gelübde der Feindschaft (Vow of Enmity)",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isVowOfEnmityActive) PaladinGoldBright else TextPrimary
+                                )
+                                Text(
+                                    text = "Vorteil auf Angriffe gegen Ziel (1 Min.)",
                                     fontSize = 10.sp,
                                     color = if (isVowOfEnmityActive) PaladinGold else TextSecondary
                                 )
@@ -342,18 +317,12 @@ fun ChannelDivinityCard(
                                     )
                                     .padding(end = 8.dp, top = 2.dp, bottom = 2.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = "☀️ Untote vertreiben (Turn the Unholy)",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
-                                    )
-                                    Text("ℹ️", fontSize = 10.sp)
-                                }
+                                Text(
+                                    text = "☀️ Untote vertreiben (Turn the Unholy)",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
                                 Text(
                                     text = "Aktion • Untote/Unholde fliehen 1 Min. (DC $turnDc)",
                                     fontSize = 10.sp,
@@ -393,20 +362,14 @@ fun ChannelDivinityCard(
                                 )
                                 .padding(end = 8.dp, top = 2.dp, bottom = 2.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "⚡ Göttliche Kraft bündeln",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Text("ℹ️", fontSize = 10.sp)
-                            }
                             Text(
-                                text = "Regeneriert 1 verbrauchten Zauberslot (Info antippen)",
+                                text = "⚡ Göttliche Kraft bündeln",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "Regeneriert 1 verbrauchten Zauberslot",
                                 fontSize = 10.sp,
                                 color = TextSecondary
                             )

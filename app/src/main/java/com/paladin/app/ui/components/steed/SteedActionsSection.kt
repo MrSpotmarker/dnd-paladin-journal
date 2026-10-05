@@ -41,23 +41,12 @@ fun SteedActionsSection(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "⚔️ Aktionen & Taktik",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = PaladinGold
-            )
-            Text(
-                text = "ℹ️ Antippen für Details",
-                fontSize = 10.sp,
-                color = TextMuted
-            )
-        }
+        Text(
+            text = "⚔️ Aktionen & Taktik",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = PaladinGold
+        )
 
         // Action 1: Otherworldly Slam (Nahkampf-Angriff)
         SteedCombatActionCard(

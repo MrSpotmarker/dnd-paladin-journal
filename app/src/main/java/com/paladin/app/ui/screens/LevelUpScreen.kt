@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -88,7 +91,9 @@ fun LevelUpScreen(
     var manualHpGain by remember { mutableStateOf("6") }
 
     val conMod = stats.modifiers[Ability.CONSTITUTION] ?: 0
-    val averageHpGain = (6 + conMod).coerceAtLeast(1)
+    val levelDiff = (selectedLevel - character.level).coerceAtLeast(0)
+    val baseGainPerLevel = (6 + conMod).coerceAtLeast(1)
+    val averageHpGain = if (levelDiff > 1) levelDiff * baseGainPerLevel else baseGainPerLevel
 
     Column(
         modifier = modifier
@@ -185,7 +190,12 @@ fun LevelUpScreen(
                     FilterChip(
                         selected = hpMode == "average",
                         onClick = { hpMode = "average" },
-                        label = { Text("Fester Schnitt ($averageHpGain HP)") }
+                        label = {
+                            Text(
+                                if (levelDiff > 1) "Fester Schnitt ($averageHpGain HP für $levelDiff Stufen)"
+                                else "Fester Schnitt ($averageHpGain HP)"
+                            )
+                        }
                     )
                     FilterChip(
                         selected = hpMode == "manual",
@@ -198,14 +208,54 @@ fun LevelUpScreen(
                     OutlinedTextField(
                         value = manualHpGain,
                         onValueChange = { manualHpGain = it },
-                        label = { Text("Gewürfelter Wert (1d10 + CON)") },
+                        label = { Text("Gewürfelter Gesamtwert (1d10 + CON)") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
+                if (character.maxHpManualAdjustment != 0) {
+                    Surface(
+                        color = PaladinGold.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, PaladinGold.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Manuelle HP-Abweichung aktiv:",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary
+                                )
+                                Text(
+                                    text = "${if (character.maxHpManualAdjustment > 0) "+${character.maxHpManualAdjustment}" else "${character.maxHpManualAdjustment}"} HP gegenüber Standard",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PaladinGold
+                                )
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.resetHpToStandardRules()
+                                    Toast.makeText(context, "HP auf D&D 2024 Standard zurückgesetzt!", Toast.LENGTH_SHORT).show()
+                                },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                modifier = Modifier.height(28.dp)
+                            ) {
+                                Text("Auf Standard zurücksetzen", fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+
                 Button(
                     onClick = {
-                        val hpGain = if (hpMode == "average") averageHpGain else manualHpGain.toIntOrNull() ?: averageHpGain
+                        val isManual = (hpMode == "manual")
+                        val manualValue = if (isManual) manualHpGain.toIntOrNull() else null
                         val resolvedOath = if (selectedLevel >= 3) selectedOath else null
                         val resolvedFightingStyle = selectedFeats.firstOrNull {
                             it.contains("Defense", ignoreCase = true) || it.contains("Dueling", ignoreCase = true)
@@ -213,19 +263,27 @@ fun LevelUpScreen(
 
                         viewModel.updateLevel(
                             newLevel = selectedLevel,
-                            hpGain = hpGain,
+                            isManualHp = isManual,
+                            manualHpGain = manualValue,
                             newOath = resolvedOath,
                             newFightingStyle = resolvedFightingStyle,
                             newFeats = selectedFeats.toList(),
                             newAbilityScores = modifiedAbilities
                         )
-                        Toast.makeText(context, "Auf Stufe $selectedLevel aufgestiegen!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            if (selectedLevel > character.level) "Auf Stufe $selectedLevel aufgestiegen!" else "Charakterdaten aktualisiert!",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = PaladinGold, contentColor = DarkNavyBackground),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Stufe anwenden", fontWeight = FontWeight.Bold)
+                    Text(
+                        if (selectedLevel > character.level) "Stufe anwenden" else "Änderungen speichern",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

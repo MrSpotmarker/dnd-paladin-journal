@@ -2,11 +2,26 @@ package com.paladin.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,8 +31,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.paladin.app.model.*
-import com.paladin.app.ui.theme.*
+import com.paladin.app.model.Ability
+import com.paladin.app.model.DetailItem
+import com.paladin.app.model.FeatDefinition
+import com.paladin.app.model.Item
+import com.paladin.app.model.ItemEffect
+import com.paladin.app.model.ItemType
+import com.paladin.app.model.Skill
+import com.paladin.app.model.Spell
+import com.paladin.app.ui.theme.BorderDark
+import com.paladin.app.ui.theme.DarkNavyBackground
+import com.paladin.app.ui.theme.PaladinGold
+import com.paladin.app.ui.theme.ProficiencyGreen
+import com.paladin.app.ui.theme.SmiteBlue
+import com.paladin.app.ui.theme.SpellSlotPurple
+import com.paladin.app.ui.theme.SurfaceCard
+import com.paladin.app.ui.theme.SurfaceCardHighlight
+import com.paladin.app.ui.theme.TextPrimary
+import com.paladin.app.ui.theme.TextSecondary
 
 @Composable
 fun DetailInfoDialog(
@@ -448,26 +479,23 @@ private fun FeatureHeader(feature: DetailItem.FeatureInfo) {
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(feature.icon, fontSize = 28.sp)
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = feature.title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = PaladinGold
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 2.dp)
-            ) {
-                if (feature.subtitle != null) {
-                    Text(
-                        text = feature.subtitle,
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-                if (feature.badge != null) {
+            if (feature.subtitle != null) {
+                Text(
+                    text = feature.subtitle,
+                    fontSize = 12.sp,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+            if (feature.badge != null) {
+                Box(modifier = Modifier.padding(top = 4.dp)) {
                     BadgeChip(text = feature.badge, color = PaladinGold)
                 }
             }
@@ -634,15 +662,22 @@ private fun AbilityBody(ability: DetailItem.AbilityInfo) {
 private fun PropertyRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top
     ) {
-        Text(text = label, fontSize = 12.sp, color = TextSecondary)
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = TextSecondary,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(0.30f)
+        )
         Text(
             text = value,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            color = TextPrimary
+            color = TextPrimary,
+            modifier = Modifier.weight(0.70f)
         )
     }
 }

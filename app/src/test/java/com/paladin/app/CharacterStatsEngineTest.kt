@@ -1,9 +1,20 @@
 package com.paladin.app
 
 import com.paladin.app.engine.CharacterStatsEngine
-import com.paladin.app.engine.RestService
-import com.paladin.app.model.*
-import org.junit.Assert.*
+import com.paladin.app.model.Ability
+import com.paladin.app.model.AbilityScores
+import com.paladin.app.model.ArmorType
+import com.paladin.app.model.CharacterSheet
+import com.paladin.app.model.DmOverrides
+import com.paladin.app.model.Item
+import com.paladin.app.model.ItemEffect
+import com.paladin.app.model.ItemType
+import com.paladin.app.model.JournalEntry
+import com.paladin.app.model.Species
+import com.paladin.app.model.WeaponMastery
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CharacterStatsEngineTest {
@@ -458,5 +469,50 @@ class CharacterStatsEngineTest {
 
         val stats = CharacterStatsEngine.calculate(character)
         assertEquals(1.0, stats.totalWeightLbs, 0.001)
+    }
+
+    @Test
+    fun testHitPointsProgressionCon13StandardAverage() {
+        val baseAbilities = AbilityScores(
+            strength = 16,
+            dexterity = 10,
+            constitution = 13, // Modifier +1
+            intelligence = 8,
+            wisdom = 10,
+            charisma = 16
+        )
+
+        // Stufe 1: 10 + CON (+1) = 11 HP
+        val lvl1 = CharacterSheet(level = 1, baseAbilityScores = baseAbilities)
+        assertEquals(11, CharacterStatsEngine.calculate(lvl1).maxHp)
+
+        // Stufe 2: 11 + 6 + 1 = 18 HP
+        val lvl2 = CharacterSheet(level = 2, baseAbilityScores = baseAbilities)
+        assertEquals(18, CharacterStatsEngine.calculate(lvl2).maxHp)
+
+        // Stufe 3: 18 + 6 + 1 = 25 HP (Genau die Frage des Nutzers!)
+        val lvl3 = CharacterSheet(level = 3, baseAbilityScores = baseAbilities)
+        assertEquals(25, CharacterStatsEngine.calculate(lvl3).maxHp)
+    }
+
+    @Test
+    fun testHitPointsWithManualAdjustmentAndTough() {
+        val baseAbilities = AbilityScores(constitution = 13) // Mod +1
+
+        // Vor Bugfix: maxHpManualAdjustment = 2 führte fälschlicherweise zu 27 HP
+        val buggyChar = CharacterSheet(
+            level = 3,
+            baseAbilityScores = baseAbilities,
+            maxHpManualAdjustment = 2
+        )
+        assertEquals(27, CharacterStatsEngine.calculate(buggyChar).maxHp)
+
+        // Nach Korrektur / Reset auf Standard: maxHpManualAdjustment = 0 -> 25 HP
+        val fixedChar = buggyChar.copy(maxHpManualAdjustment = 0)
+        assertEquals(25, CharacterStatsEngine.calculate(fixedChar).maxHp)
+
+        // Mit Tough-Feat: +2 HP pro Stufe (+6 auf Stufe 3) -> 31 HP
+        val toughChar = fixedChar.copy(feats = listOf("Tough"))
+        assertEquals(31, CharacterStatsEngine.calculate(toughChar).maxHp)
     }
 }

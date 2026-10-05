@@ -64,6 +64,7 @@ import com.paladin.app.ui.theme.ChaunteaGreenContainer
 import com.paladin.app.ui.theme.DarkNavyBackground
 import com.paladin.app.ui.theme.HealthRed
 import com.paladin.app.ui.theme.PaladinGold
+import com.paladin.app.ui.theme.ProficiencyGreen
 import com.paladin.app.ui.theme.SpellSlotPurple
 import com.paladin.app.ui.theme.SurfaceCard
 import com.paladin.app.ui.theme.SurfaceCardHighlight
@@ -118,7 +119,11 @@ fun SpellbookScreen(
                 Text(
                     text = "Vorbereitet: $preparedCount / $maxPrepared Zauber",
                     fontSize = 12.sp,
-                    color = if (preparedCount >= maxPrepared) HealthRed else TextSecondary,
+                    color = when {
+                        preparedCount > maxPrepared -> HealthRed
+                        preparedCount == maxPrepared -> ProficiencyGreen
+                        else -> TextSecondary
+                    },
                     fontWeight = FontWeight.Bold
                 )
             }

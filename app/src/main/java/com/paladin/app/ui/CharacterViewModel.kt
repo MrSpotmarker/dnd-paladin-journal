@@ -319,7 +319,8 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
 
     fun updateLevel(
         newLevel: Int,
-        hpGain: Int,
+        isManualHp: Boolean = false,
+        manualHpGain: Int? = null,
         newOath: String? = null,
         newFightingStyle: String? = null,
         newFeats: List<String>? = null,
@@ -327,11 +328,42 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
     ) {
         val oldLevel = character.value.level
         val levelDiff = (newLevel - oldLevel).coerceAtLeast(0)
-        val addedHp = if (hpGain > 0) hpGain else levelDiff * 6
         val updatedOath = if (newLevel >= 3) (newOath ?: character.value.oath) else character.value.oath
         val updatedFightingStyle = if (newLevel >= 2) (newFightingStyle ?: character.value.fightingStyle) else character.value.fightingStyle
         val updatedFeats = newFeats ?: character.value.feats
         val updatedAbilities = newAbilityScores ?: character.value.baseAbilityScores
+
+        val conMod = Ability.calculateModifier(updatedAbilities.constitution)
+        val standardGainPerLevel = (6 + conMod).coerceAtLeast(1)
+        val standardGain = levelDiff * standardGainPerLevel
+
+        val newAdjustment: Int
+        val addedHp: Int
+
+        if (levelDiff > 0) {
+            if (isManualHp && manualHpGain != null) {
+                newAdjustment = character.value.maxHpManualAdjustment + (manualHpGain - standardGain)
+                addedHp = manualHpGain.coerceAtLeast(1)
+            } else {
+                newAdjustment = character.value.maxHpManualAdjustment
+                addedHp = standardGain
+            }
+        } else {
+            // Re-applying current level or leveling down
+            newAdjustment = if (!isManualHp) 0 else character.value.maxHpManualAdjustment
+            addedHp = 0
+        }
+
+        val baseLvl1Hp = 10 + conMod
+        val higherLvlHp = if (newLevel > 1) (newLevel - 1) * (6 + conMod) else 0
+        val toughBonus = if (updatedFeats.any { it.contains("Tough", ignoreCase = true) }) newLevel * 2 else 0
+        val targetMaxHp = maxOf(1, baseLvl1Hp + higherLvlHp + toughBonus + newAdjustment + character.value.dmOverrides.hpMaxBonus)
+
+        val updatedCurrentHp = if (levelDiff > 0) {
+            minOf(character.value.currentHp + addedHp, targetMaxHp)
+        } else {
+            minOf(character.value.currentHp, targetMaxHp)
+        }
 
         val updated = character.value.copy(
             level = newLevel.coerceIn(1, 20),
@@ -339,8 +371,18 @@ class CharacterViewModel(private val repository: CharacterRepository) : ViewMode
             fightingStyle = updatedFightingStyle,
             feats = updatedFeats,
             baseAbilityScores = updatedAbilities,
-            maxHpManualAdjustment = character.value.maxHpManualAdjustment + (if (hpGain > 0) hpGain - (levelDiff * 6) else 0),
-            currentHp = character.value.currentHp + addedHp
+            maxHpManualAdjustment = newAdjustment,
+            currentHp = updatedCurrentHp
+        )
+        repository.updateCharacter(updated)
+    }
+
+    fun resetHpToStandardRules() {
+        val char = character.value
+        val zeroAdjustmentChar = char.copy(maxHpManualAdjustment = 0)
+        val standardMaxHp = CharacterStatsEngine.calculate(zeroAdjustmentChar).maxHp
+        val updated = zeroAdjustmentChar.copy(
+            currentHp = minOf(char.currentHp, standardMaxHp)
         )
         repository.updateCharacter(updated)
     }
