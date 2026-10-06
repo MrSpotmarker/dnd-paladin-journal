@@ -1,5 +1,8 @@
 # 🛡️ D&D Paladin (2024) Character-Sheet Android App
 
+> [!NOTE]
+> **Disclaimer:** Feel free to use, explore, or adapt this project for your own purposes! However, please note that this project is not intended for public release or general distribution. The application has been built and tailored specifically to my personal needs, my specific phone, and my Android version.
+
 Eine native Android-App zur Verwaltung eines Paladins basierend auf den neuen **D&D 2024 Core Rules (D&D 5.2 / 5.5e)**.
 
 ---
